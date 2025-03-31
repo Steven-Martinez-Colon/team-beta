@@ -9,7 +9,7 @@ dataset_folder <- paste(getwd(),"/datasets",sep="")
 all_csv <- list.files(path = dataset_folder, pattern = "\\.csv$", full.names = TRUE)
 
 csv_list <- lapply(all_csv, read.csv)
-
+names(csv_list) <- tools::file_path_sans_ext(basename(all_csv))
 
 test <- csv_list[[1]]
 View(test)
@@ -67,7 +67,6 @@ View(df_list[[1]])
 View(df_list[[2]])
 View(df_list[[3]])
 
-View(df_list[["df_1"]])
 
 # Filter out dataframes with less than 2 rows
 df_list <- df_list[sapply(df_list, nrow) >= 2]
@@ -83,5 +82,44 @@ rename_columns <- function(df) {
 # Apply function to every dataframe in the list
 df_list <- lapply(df_list, rename_columns)
 
-View(df_list[[23]])
+drop_na_cols <- function(df) {
+  df <- df[, colSums(is.na(df)) < nrow(df)]
+}
+
+df_list <- lapply(df_list, drop_na_cols)
+
+# Function to add missing columns to any dataframe in df_list
+add_missing_columns <- function(df_list, columns_to_add) {
+  # Iterate through each dataframe in the list
+  df_list <- lapply(df_list, function(df) {
+    # Check for columns that are missing
+    missing_columns <- setdiff(columns_to_add, colnames(df))
+    
+    # Add missing columns with NA values
+    for (col in missing_columns) {
+      df[[col]] <- NA  # You can change `NA` to any default value if needed
+    }
+    
+    return(df)
+  })
+  
+  return(df_list)
+}
+
+# Columns to check and add if missing
+columns_to_add <- c("EV", "HardH%")
+
+# Apply the function to the list of dataframes
+df_list <- add_missing_columns(df_list, columns_to_add)
+
+get_common_columns <- function(df_list) {
+  common_cols <- Reduce(intersect, lapply(df_list, colnames))
+  return(common_cols)
+}
+
+# Get the common columns between all dataframes
+common_columns <- get_common_columns(df_list)
+
+# Perform a full join on all dataframes based on the common columns
+df_full_joined <- Reduce(function(x, y) full_join(x, y, by = common_columns), df_list)
 
