@@ -16,7 +16,13 @@ names(csv_list) <- tools::file_path_sans_ext(basename(all_csv))
 # Function to rename columns based on first row values
 rename_columns <- function(df) {
   cols_to_rename <- colnames(df)[colnames(df) != "Year"]  # Identify columns to rename
-  colnames(df)[colnames(df) != "Year"] <- as.character(df[1, cols_to_rename])  # Rename
+  
+  colnames(df)[colnames(df) != "Year"] <- as.character(df[1, cols_to_rename])  # Rename to first value in the column
+  
+  # Handle NA or empty string column names
+  colnames(df)[is.na(colnames(df))] <- paste0("missing", which(is.na(colnames(df))))
+  colnames(df)[colnames(df) == ""] <- paste0("missing",which(colnames(df) == ""))
+  
   return(df[-1, ])  # Remove first row after renaming
 }
 
@@ -62,62 +68,193 @@ get_common_columns <- function(df_list) {
 }
 
 
-################################## Functions ###################################
-
-
-for (i in 1:length(csv_list)) {
-  current_csv <- csv_list[[i]]
+remove_non_observations <- function(df) {
   
-  # Find all indices where the first col = "Tm"
-  # Use this to split the csv file into different dataframes
-  tm_indices <- which(current_csv[[1]] == "Tm")
+  bad_values <- c("Tm","","League Average")
   
-  # Initialize a list to store the split dataframes
-  df_list <- list()
+  df <- df %>%
+    filter(!(Tm %in% bad_values))
   
-  # Loop through "Tm" indices to extract dataframes for each season
-  for (i in seq_along(tm_indices)) {
-    start_idx <- tm_indices[i]  # Start from "Tm"
-    
-    # Determine end index (either next "Tm" or end of dataframe)
-    end_idx <- ifelse(i < length(tm_indices), tm_indices[i + 1] - 1, nrow(current_csv))
-    
-    # Extract the subset and store in list
-    df_list[[paste0("df_", i)]] <- current_csv[start_idx:end_idx, ]
-  }
-  
-  
-  # Filter out dataframes with less than 2 rows
-  # Column names are written again at the end of each season so this line removes those rows
-  df_list <- df_list[sapply(df_list, nrow) >= 2]
-  
-  
-  # Apply rename_columns function to every dataframe in the list
-  df_list <- lapply(df_list, rename_columns)
-  
-  # Drop columns that have all NA values
-  df_list <- lapply(df_list, drop_na_cols)
-  
-  
-  # Get vector of all unique column names to pass through the add_missing_columns function
-  columns_to_add <- get_unique_columns(df_list)
-  
-  # Apply the function to the list of dataframes
-  df_list <- add_missing_columns(df_list, columns_to_add)
-  
-  
-  
-  # Get the common columns between all dataframes to use in full join
-  common_columns <- get_common_columns(df_list)
-  
-  # Perform a full join on all dataframes based on the common columns
-  df_full_joined <- Reduce(function(x, y) full_join(x, y, by = common_columns), df_list)
-  
-  csv_list[[i]] <- df_full_joined
-  
-  write.csv(df_full_joined, file = paste("cleaned_",names(csv_list)[i],sep = ""))
-  
+  return(df)
 }
 
 
+################################## Functions ###################################
+
+# 
+# for (i in 1:length(csv_list)) {
+#   current_csv <- csv_list[[i]]
+#   
+#   # Find all indices where the first col = "Tm"
+#   # Use this to split the csv file into different dataframes
+#   tm_indices <- which(current_csv[[1]] == "Tm")
+#   
+#   # Initialize a list to store the split dataframes
+#   df_list <- list()
+#   
+#   # Loop through "Tm" indices to extract dataframes for each season
+#   for (i in seq_along(tm_indices)) {
+#     start_idx <- tm_indices[i]  # Start from "Tm"
+#     
+#     # Determine end index (either next "Tm" or end of dataframe)
+#     end_idx <- ifelse(i < length(tm_indices), tm_indices[i + 1] - 1, nrow(current_csv))
+#     
+#     # Extract the subset and store in list
+#     df_list[[paste0("df_", i)]] <- current_csv[start_idx:end_idx, ]
+#   }
+#   
+#   
+#   # Filter out dataframes with less than 2 rows
+#   # Column names are written again at the end of each season so this line removes those rows
+#   df_list <- df_list[sapply(df_list, nrow) >= 2]
+#   
+#   
+#   # Apply rename_columns function to every dataframe in the list
+#   df_list <- lapply(df_list, rename_columns)
+#   
+#   # Drop columns that have all NA values
+#   df_list <- lapply(df_list, drop_na_cols)
+#   
+#   
+#   # Get vector of all unique column names to pass through the add_missing_columns function
+#   columns_to_add <- get_unique_columns(df_list)
+#   
+#   # Apply the function to the list of dataframes
+#   df_list <- add_missing_columns(df_list, columns_to_add)
+#   
+#   
+#   
+#   # Get the common columns between all dataframes to use in full join
+#   common_columns <- get_common_columns(df_list)
+#   
+#   # Perform a full join on all dataframes based on the common columns
+#   df_full_joined <- Reduce(function(x, y) full_join(x, y, by = common_columns), df_list)
+#   
+#   csv_list[[i]] <- df_full_joined
+#   
+#   write.csv(df_full_joined, file = paste("cleaned_",names(csv_list)[i],".csv",sep = ""))
+#   
+# }
+
+
+################################################################################
+
+
+current_csv <- csv_list[[1]]
+
+# Find all indices where the first col = "Tm"
+# Use this to split the csv file into different dataframes
+tm_indices <- which(current_csv[[1]] == "Tm")
+
+# Initialize a list to store the split dataframes
+df_list <- list()
+
+# Loop through "Tm" indices to extract dataframes for each season
+for (i in seq_along(tm_indices)) {
+  start_idx <- tm_indices[i]  # Start from "Tm"
+  
+  # Determine end index (either next "Tm" or end of dataframe)
+  end_idx <- ifelse(i < length(tm_indices), tm_indices[i + 1] - 1, nrow(current_csv))
+  
+  # Extract the subset and store in list
+  df_list[[paste0("df_", i)]] <- current_csv[start_idx:end_idx, ]
+}
+
+
+# Filter out dataframes with less than 2 rows
+# Column names are written again at the end of each season so this line removes those rows
+df_list <- df_list[sapply(df_list, nrow) >= 2]
+
+
+# Apply rename_columns function to every dataframe in the list
+df_list <- lapply(df_list, rename_columns)
+
+# Drop columns that have all NA values
+df_list <- lapply(df_list, drop_na_cols)
+
+
+# Get vector of all unique column names to pass through the add_missing_columns function
+columns_to_add <- get_unique_columns(df_list)
+
+# Apply the function to the list of dataframes
+df_list <- add_missing_columns(df_list, columns_to_add)
+
+
+# Get the common columns between all dataframes to use in full join
+common_columns <- get_common_columns(df_list)
+
+# Perform a full join on all dataframes based on the common columns
+df_full_joined <- Reduce(function(x, y) full_join(x, y, by = common_columns), df_list)
+
+df_full_joined <- remove_non_observations(df_full_joined)
+
+csv_list[[1]] <- df_full_joined
+
+write.csv(df_full_joined, file = paste(getwd(),"/cleaned_data/","cleaned_",names(csv_list)[1],".csv",sep = ""))
+
+names(csv_list)[1]
+
+
+################################################################################
+
+current_csv <- csv_list[[2]]
+
+# Find all indices where the first col = "Tm"
+# Use this to split the csv file into different dataframes
+tm_indices <- which(current_csv[[1]] == "Tm")
+
+# Initialize a list to store the split dataframes
+df_list <- list()
+
+# Loop through "Tm" indices to extract dataframes for each season
+for (i in seq_along(tm_indices)) {
+  start_idx <- tm_indices[i]  # Start from "Tm"
+  
+  # Determine end index (either next "Tm" or end of dataframe)
+  end_idx <- ifelse(i < length(tm_indices), tm_indices[i + 1] - 1, nrow(current_csv))
+  
+  # Extract the subset and store in list
+  df_list[[paste0("df_", i)]] <- current_csv[start_idx:end_idx, ]
+}
+
+
+# Filter out dataframes with less than 2 rows
+# Column names are written again at the end of each season so this line removes those rows
+df_list <- df_list[sapply(df_list, nrow) >= 2]
+
+
+# Apply rename_columns function to every dataframe in the list
+df_list <- lapply(df_list, rename_columns)
+
+# Drop columns that have all NA values
+df_list <- lapply(df_list, drop_na_cols)
+
+
+# Get vector of all unique column names to pass through the add_missing_columns function
+columns_to_add <- get_unique_columns(df_list)
+
+# Apply the function to the list of dataframes
+df_list <- add_missing_columns(df_list, columns_to_add)
+
+
+
+# Get the common columns between all dataframes to use in full join
+common_columns <- get_common_columns(df_list)
+
+# Perform a full join on all dataframes based on the common columns
+df_full_joined <- Reduce(function(x, y) full_join(x, y, by = common_columns), df_list)
+
+df_full_joined <- remove_non_observations(df_full_joined)
+
+csv_list[[2]] <- df_full_joined
+
+write.csv(df_full_joined, file = paste(getwd(),"/cleaned_data/","cleaned_",names(csv_list)[2],".csv",sep = ""))
+
+names(csv_list)[2]
+
+################################################################################
+
+
+current_csv <- csv_list[[3]]
+test <- remove_non_observations(current_csv)
 
