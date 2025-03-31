@@ -45,3 +45,43 @@ for (idx in na_cols) {
 }
 
 ###############################################################################
+
+
+tm_indices <- which(test[[1]] == "Tm")
+
+# Initialize a list to store the split dataframes
+df_list <- list()
+
+# Loop through "Tm" indices to extract subsets
+for (i in seq_along(tm_indices)) {
+  start_idx <- tm_indices[i]  # Start from "Tm"
+  
+  # Determine end index (either next "Tm" or end of dataframe)
+  end_idx <- ifelse(i < length(tm_indices), tm_indices[i + 1] - 1, nrow(test))
+  
+  # Extract the subset and store in list
+  df_list[[paste0("df_", i)]] <- test[start_idx:end_idx, ]
+}
+
+View(df_list[[1]])
+View(df_list[[2]])
+View(df_list[[3]])
+
+View(df_list[["df_1"]])
+
+# Filter out dataframes with less than 2 rows
+df_list <- df_list[sapply(df_list, nrow) >= 2]
+
+
+# Function to rename columns based on first row values
+rename_columns <- function(df) {
+  cols_to_rename <- colnames(df)[colnames(df) != "Year"]  # Identify columns to rename
+  colnames(df)[colnames(df) != "Year"] <- as.character(df[1, cols_to_rename])  # Rename
+  return(df[-1, ])  # Remove first row after renaming
+}
+
+# Apply function to every dataframe in the list
+df_list <- lapply(df_list, rename_columns)
+
+View(df_list[[23]])
+
