@@ -11,66 +11,7 @@ all_csv <- list.files(path = dataset_folder, pattern = "\\.csv$", full.names = T
 csv_list <- lapply(all_csv, read.csv)
 names(csv_list) <- tools::file_path_sans_ext(basename(all_csv))
 
-test <- csv_list[[1]]
-View(test)
-
-colnames(test) <- as.character(test[1,])
-test <- test[-1,]
-
-colnames(test)[colnames(test) == "2000"] <- "year"
-
-
-############################# Account for NA columns ###########################
-
-# Identify columns with blank names or containing "NA"
-na_cols <- which(is.na(colnames(test)))
-
-
-# Function to find first character value in a column
-find_first_character_value <- function(column) {
-  char_value <- column[sapply(column, is.character)][1]  # Get first character entry
-  if (!is.na(char_value) && !is.null(char_value)) {
-    return(char_value)
-  } else {
-    return(NA)  # Return NA if no character value found
-  }
-}
-
-# Loop through identified columns and rename them
-for (idx in na_cols) {
-  new_name <- find_first_character_value(test[[idx]])
-  if (!is.na(new_name)) {
-    colnames(test)[idx] <- new_name  # Rename column
-  }
-}
-
-###############################################################################
-
-
-tm_indices <- which(test[[1]] == "Tm")
-
-# Initialize a list to store the split dataframes
-df_list <- list()
-
-# Loop through "Tm" indices to extract subsets
-for (i in seq_along(tm_indices)) {
-  start_idx <- tm_indices[i]  # Start from "Tm"
-  
-  # Determine end index (either next "Tm" or end of dataframe)
-  end_idx <- ifelse(i < length(tm_indices), tm_indices[i + 1] - 1, nrow(test))
-  
-  # Extract the subset and store in list
-  df_list[[paste0("df_", i)]] <- test[start_idx:end_idx, ]
-}
-
-View(df_list[[1]])
-View(df_list[[2]])
-View(df_list[[3]])
-
-
-# Filter out dataframes with less than 2 rows
-df_list <- df_list[sapply(df_list, nrow) >= 2]
-
+################################## Functions ###################################
 
 # Function to rename columns based on first row values
 rename_columns <- function(df) {
@@ -79,14 +20,22 @@ rename_columns <- function(df) {
   return(df[-1, ])  # Remove first row after renaming
 }
 
-# Apply function to every dataframe in the list
-df_list <- lapply(df_list, rename_columns)
 
 drop_na_cols <- function(df) {
   df <- df[, colSums(is.na(df)) < nrow(df)]
 }
 
-df_list <- lapply(df_list, drop_na_cols)
+
+get_unique_columns <- function(df_list) {
+  # Extract column names from all dataframes and combine them into one vector
+  all_columns <- unlist(lapply(df_list, colnames))
+  
+  # Get unique column names
+  unique_columns <- unique(all_columns)
+  
+  return(unique_columns)
+}
+
 
 # Function to add missing columns to any dataframe in df_list
 add_missing_columns <- function(df_list, columns_to_add) {
@@ -106,20 +55,69 @@ add_missing_columns <- function(df_list, columns_to_add) {
   return(df_list)
 }
 
-# Columns to check and add if missing
-columns_to_add <- c("EV", "HardH%")
-
-# Apply the function to the list of dataframes
-df_list <- add_missing_columns(df_list, columns_to_add)
 
 get_common_columns <- function(df_list) {
   common_cols <- Reduce(intersect, lapply(df_list, colnames))
   return(common_cols)
 }
 
-# Get the common columns between all dataframes
-common_columns <- get_common_columns(df_list)
 
-# Perform a full join on all dataframes based on the common columns
-df_full_joined <- Reduce(function(x, y) full_join(x, y, by = common_columns), df_list)
+################################## Functions ###################################
+
+
+for (i in 1:length(csv_list)) {
+  current_csv <- csv_list[[i]]
+  
+  # Find all indices where the first col = "Tm"
+  # Use this to split the csv file into different dataframes
+  tm_indices <- which(current_csv[[1]] == "Tm")
+  
+  # Initialize a list to store the split dataframes
+  df_list <- list()
+  
+  # Loop through "Tm" indices to extract dataframes for each season
+  for (i in seq_along(tm_indices)) {
+    start_idx <- tm_indices[i]  # Start from "Tm"
+    
+    # Determine end index (either next "Tm" or end of dataframe)
+    end_idx <- ifelse(i < length(tm_indices), tm_indices[i + 1] - 1, nrow(current_csv))
+    
+    # Extract the subset and store in list
+    df_list[[paste0("df_", i)]] <- current_csv[start_idx:end_idx, ]
+  }
+  
+  
+  # Filter out dataframes with less than 2 rows
+  # Column names are written again at the end of each season so this line removes those rows
+  df_list <- df_list[sapply(df_list, nrow) >= 2]
+  
+  
+  # Apply rename_columns function to every dataframe in the list
+  df_list <- lapply(df_list, rename_columns)
+  
+  # Drop columns that have all NA values
+  df_list <- lapply(df_list, drop_na_cols)
+  
+  
+  # Get vector of all unique column names to pass through the add_missing_columns function
+  columns_to_add <- get_unique_columns(df_list)
+  
+  # Apply the function to the list of dataframes
+  df_list <- add_missing_columns(df_list, columns_to_add)
+  
+  
+  
+  # Get the common columns between all dataframes to use in full join
+  common_columns <- get_common_columns(df_list)
+  
+  # Perform a full join on all dataframes based on the common columns
+  df_full_joined <- Reduce(function(x, y) full_join(x, y, by = common_columns), df_list)
+  
+  csv_list[[i]] <- df_full_joined
+  
+  write.csv(df_full_joined, file = paste("cleaned_",names(csv_list)[i],sep = ""))
+  
+}
+
+
 
