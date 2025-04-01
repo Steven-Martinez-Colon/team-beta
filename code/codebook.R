@@ -3,6 +3,7 @@ library(tidyr)
 library(dplyr)
 library(stringr)
 library(codebookr)
+library(readr)
 
 dataset_folder <- paste(getwd(),"/datasets",sep="")
 
@@ -237,7 +238,6 @@ columns_to_add <- get_unique_columns(df_list)
 df_list <- add_missing_columns(df_list, columns_to_add)
 
 
-
 # Get the common columns between all dataframes to use in full join
 common_columns <- get_common_columns(df_list)
 
@@ -255,6 +255,12 @@ names(csv_list)[2]
 ################################################################################
 
 
-current_csv <- csv_list[[3]]
-test <- remove_non_observations(current_csv)
+for (i in 3:length(csv_list)) {
+  csv_list[[i]] <- remove_non_observations(csv_list[[i]])
+  write.csv(df_full_joined, file = paste(getwd(),"/cleaned_data/","cleaned_",names(csv_list)[i],".csv",sep = ""))
+}
+
+
+################################################################################
+
 
