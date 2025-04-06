@@ -1,0 +1,444 @@
+---
+title: "DSE 6311 EDA"
+author: "James Keegan"
+date: "2025-04-03"
+output: html_document
+---
+
+```{R}
+# Loading Libraries
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+
+```
+
+# Pitching Data
+
+```{R}
+# Loading Advanced Pitching Data
+advanced_pitching_data = read.csv("C:\\Users\\student\\Documents\\DSE 6311\\Module 3\\cleaned_Team_Advanced_Pitching_2000_2024.csv")
+
+# Cleaning Data
+advanced_pitching_data = advanced_pitching_data %>%
+  dplyr::select(-X)
+
+# Removing percentages for variables and replacing them with appropriate decimals
+advanced_pitching_data$HR. <- as.numeric(gsub("%", "", advanced_pitching_data$HR.)) / 100
+advanced_pitching_data$SO. <- as.numeric(gsub("%", "", advanced_pitching_data$SO.)) / 100
+advanced_pitching_data$BB. <- as.numeric(gsub("%", "", advanced_pitching_data$BB.)) / 100
+advanced_pitching_data$LD. <- as.numeric(gsub("%", "", advanced_pitching_data$LD.)) / 100
+advanced_pitching_data$GB. <- as.numeric(gsub("%", "", advanced_pitching_data$GB.)) / 100
+advanced_pitching_data$FB. <- as.numeric(gsub("%", "", advanced_pitching_data$FB.)) / 100
+advanced_pitching_data$cWPA <- as.numeric(gsub("%", "", advanced_pitching_data$cWPA)) / 100
+
+print(advanced_pitching_data)
+
+```
+
+```{R}
+# Loading Player Pitching Data
+team_player_pitching_data = read.csv("C:\\Users\\student\\Documents\\DSE 6311\\Module 3\\Team_Player_Value_Pitchers_2000_2024.csv")
+
+# Removing Non-Values from the dataset
+team_player_pitching_data = team_player_pitching_data %>%
+  filter(Tm != "Tm" & Tm != "")
+
+print(team_player_pitching_data)
+
+```
+
+```{R}
+# Loading Standard Pitching Data
+team_standard_pitching_data = read.csv("C:\\Users\\student\\Documents\\DSE 6311\\Module 3\\Team_Standard_Pitching_2000_2024.csv")
+
+# Removing Non-Values from the dataset
+team_standard_pitching_data = team_standard_pitching_data %>%
+  filter(Tm != "Tm" & Tm != "" & Tm != "League Average")
+
+print(team_standard_pitching_data)
+
+```
+
+```{R}
+# Joining Pitching Dataframes
+joined_pitching_data = team_standard_pitching_data %>%
+  left_join(advanced_pitching_data, by = c("Tm", "Year")) %>%
+  left_join(team_player_pitching_data, by = c("Tm", "Year"))
+
+# Making all variables numeric besides the team name
+joined_pitching_data$Salary <- as.numeric(gsub("[$,]", "", joined_pitching_data$Salary))
+joined_pitching_data = joined_pitching_data %>%
+  mutate_at(vars(-Tm), as.numeric)
+
+head(joined_pitching_data)
+
+```
+
+```{R}
+# Cleaning joined data and removing repeat columns
+cleaned_pitching_data = joined_pitching_data %>%
+  dplyr::select(-IP.y, -G.y, -GS.y, -R.y) %>%
+  rename(G = G.x, GS = GS.x, R = R.x, IP = IP.x)
+print(cleaned_pitching_data)
+
+```
+
+# Pitching Plots
+
+```{R}
+ggplot(cleaned_pitching_data, aes(x = W)) + 
+         geom_point(aes(y = BB, color = "BB")) + 
+         geom_point(aes(y = LOB, color = "LOB")) +
+         geom_point(aes(y = SO, color = "SO"))
+
+```
+
+```{R}
+ggplot(cleaned_pitching_data, aes(x = W)) + 
+         geom_point(aes(y = OBP, color = "OBP")) + 
+         geom_point(aes(y = SLG, color = "SLG")) +
+         geom_point(aes(y = BA, color = "BA"))
+
+```
+
+```{R}
+ggplot(cleaned_pitching_data, aes(x = W)) + 
+         geom_point(aes(y = LD., color = "LD%")) + 
+         geom_point(aes(y = GB., color = "GB%")) +
+         geom_point(aes(y = FB., color = "FB%"))
+
+```
+
+```{R}
+ggplot(cleaned_pitching_data, aes(x = W)) + 
+         geom_point(aes(y = WPA, color = "WPA")) + 
+         geom_point(aes(y = cWPA, color = "cWPA"))
+
+```
+
+```{R}
+ggplot(cleaned_pitching_data, aes(x = W, y = WAA)) + geom_point()
+
+```
+
+```{R}
+ggplot(cleaned_pitching_data, aes(x = W)) + 
+         geom_point(aes(y = RA9, color = "RA9")) + 
+         geom_point(aes(y = RA9opp, color = "RA9 Opp")) +
+         geom_point(aes(y = RA9avg, color = "RA Avg"))
+
+```
+
+```{R}
+ggplot(cleaned_pitching_data, aes(x = W, y = PAge)) + geom_point()
+
+```
+
+# Batting Data
+
+```{R}
+# Loading Advanced Batting Data
+advanced_batting_data = read.csv("C:\\Users\\student\\Documents\\DSE 6311\\Module 3\\cleaned_Team_Advanced_Batting_2000_2024.csv")
+
+# Cleaning Data
+advanced_batting_data = advanced_batting_data %>%
+  dplyr::select(-X)
+
+# Removing percentages for variables and replacing them with appropriate decimals
+advanced_batting_data$HR. <- as.numeric(gsub("%", "", advanced_batting_data$HR.)) / 100
+advanced_batting_data$SO. <- as.numeric(gsub("%", "", advanced_batting_data$SO.)) / 100
+advanced_batting_data$BB. <- as.numeric(gsub("%", "", advanced_batting_data$BB.)) / 100
+advanced_batting_data$LD. <- as.numeric(gsub("%", "", advanced_batting_data$LD.)) / 100
+advanced_batting_data$GB. <- as.numeric(gsub("%", "", advanced_batting_data$GB.)) / 100
+advanced_batting_data$FB. <- as.numeric(gsub("%", "", advanced_batting_data$FB.)) / 100
+advanced_batting_data$Pull. <- as.numeric(gsub("%", "", advanced_batting_data$Pull.)) / 100
+advanced_batting_data$Cent. <- as.numeric(gsub("%", "", advanced_batting_data$Cent.)) / 100
+advanced_batting_data$Oppo. <- as.numeric(gsub("%", "", advanced_batting_data$Oppo.)) / 100
+advanced_batting_data$cWPA <- as.numeric(gsub("%", "", advanced_batting_data$cWPA)) / 100
+advanced_batting_data$RS. <- as.numeric(gsub("%", "", advanced_batting_data$RS.)) / 100
+advanced_batting_data$SB. <- as.numeric(gsub("%", "", advanced_batting_data$SB.)) / 100
+advanced_batting_data$XBT. <- as.numeric(gsub("%", "", advanced_batting_data$XBT.)) / 100
+
+print(advanced_batting_data)
+
+```
+
+```{R}
+# Loading Player Batting Data
+team_player_batting_data = read.csv("C:\\Users\\student\\Documents\\DSE 6311\\Module 3\\Team_Player_Value_Batters_2000_2024.csv")
+
+# Cleaning Data
+team_player_batting_data = team_player_batting_data %>%
+  dplyr::select(-G) 
+
+# Removing Non-Values from the dataset
+team_player_batting_data = team_player_batting_data %>%
+  filter(Tm != "Tm" & Tm != "")
+
+print(team_player_batting_data)
+
+```
+
+```{R}
+# Loading Standard Batting Data
+team_standard_batting_data = read.csv("C:\\Users\\student\\Documents\\DSE 6311\\Module 3\\Team_Standard_Batting_2000_2024.csv")
+
+# Removing Non-Values from the dataset
+team_standard_batting_data = team_standard_batting_data %>%
+  filter(Tm != "Tm" & Tm != "" & Tm != "League Average")
+
+print(team_standard_batting_data)
+
+```
+
+```{R}
+# Joining Batting Dataframes
+joined_batting_data = team_standard_batting_data %>%
+  left_join(advanced_batting_data, by = c("Tm", "Year")) %>%
+  left_join(team_player_batting_data, by = c("Tm", "Year"))
+
+# Making all variables numeric besides the team name
+joined_batting_data$Salary <- as.numeric(gsub("[$,]", "", joined_batting_data$Salary))
+joined_batting_data = joined_batting_data %>%
+  mutate_at(vars(-Tm), as.numeric)
+
+head(joined_batting_data)
+  
+```
+
+```{R}
+# Cleaning joined data and removing repeat columns
+cleaned_batting_data = joined_batting_data %>%
+  dplyr::select(-PA.y) %>%
+  rename(PA = PA.x) %>%
+print(cleaned_batting_data)
+
+```
+
+```{R}
+# Creating small data frame that contains the Tm, Year, W, and L
+Win_Loss_Data = cleaned_pitching_data %>%
+  dplyr::select(Tm, W, L, Year)
+
+# Joining Win Loss Data to Batting Data
+cleaned_batting_data = cleaned_batting_data %>%
+  left_join(Win_Loss_Data, by = c("Tm", "Year"))
+
+print(cleaned_batting_data)
+
+```
+
+# Batting Plots
+
+```{R}
+ggplot(cleaned_batting_data, aes(x = W)) + 
+         geom_point(aes(y = OBP, color = "OBP")) + 
+         geom_point(aes(y = SLG, color = "SLG")) +
+         geom_point(aes(y = BA, color = "BA"))
+
+```
+
+```{R}
+ggplot(cleaned_batting_data, aes(x = W)) + 
+         geom_point(aes(y = X2B, color = "2B")) + 
+         geom_point(aes(y = X3B, color = "3B")) +
+         geom_point(aes(y = HR, color = "HR"))
+
+```
+
+```{R}
+ggplot(cleaned_batting_data, aes(x = W, y = BB)) + geom_point()
+
+```
+
+```{R}
+ggplot(cleaned_batting_data, aes(x = W)) + 
+         geom_point(aes(y = Pull., color = "Pull%")) + 
+         geom_point(aes(y = Cent., color = "Center%")) +
+         geom_point(aes(y = Oppo., color = "Oppo%"))
+
+```
+
+```{R}
+ggplot(cleaned_batting_data, aes(x = W)) + 
+         geom_point(aes(y = Rbat, color = "RBat")) + 
+         geom_point(aes(y = Rbaser, color = "RBaser"))
+
+```
+
+```{R}
+ggplot(cleaned_batting_data, aes(x = W)) + 
+         geom_point(aes(y = SO., color = "SO%")) + 
+         geom_point(aes(y = BB., color = "BB%"))
+
+```
+
+```{R}
+ggplot(cleaned_batting_data, aes(x = W, y = BatAge)) + geom_point()
+
+```
+
+# Fielding
+
+```{R}
+# Loading Standard Fielding Data
+team_standard_fielding_data = read.csv("C:\\Users\\student\\Documents\\DSE 6311\\Module 3\\Team_Fielding_2000_2024.csv")
+
+# Removing Non-Values from the dataset
+team_standard_fielding_data = team_standard_fielding_data %>%
+  filter(Tm != "Tm" & Tm != "" & Tm != "League Average")
+
+print(team_standard_fielding_data)
+
+```
+
+```{R}
+# Joining Win Loss Data to Fielding Data
+cleaned_fielding_data = team_standard_fielding_data %>%
+  left_join(Win_Loss_Data, by = c("Tm", "Year"))
+
+# Making all variables numeric besides the team name
+cleaned_fielding_data = cleaned_fielding_data %>%
+  mutate_at(vars(-Tm), as.numeric)
+
+head(cleaned_fielding_data)
+
+```
+
+# Fielding Plots
+
+```{R}
+ggplot(cleaned_fielding_data, aes(x = W, y = X.Fld)) + geom_point()
+
+```
+
+```{R}
+ggplot(cleaned_fielding_data, aes(x = W, y = DefEff)) + geom_point()
+
+```
+
+```{R}
+ggplot(cleaned_fielding_data, aes(x = W, y = Fld.)) + geom_point()
+
+```
+
+# Sabermetrics
+
+```{R}
+# Loading Sabermetrics Data
+sabermetrics_data = read.csv("C:\\Users\\student\\Documents\\DSE 6311\\Module 3\\Team_Sabermetric_Batting_2000_2024.csv")
+
+# Removing Non-Values from the dataset
+sabermetrics_data = sabermetrics_data %>%
+  filter(Tm != "Tm" & Tm != "" & Tm != "League Average")
+
+print(sabermetrics_data)
+
+```
+
+```{R}
+# Joining Win Loss Data to Sabermetrics Data
+cleaned_sabermetrics_data = sabermetrics_data %>%
+  left_join(Win_Loss_Data, by = c("Tm", "Year"))
+
+# Making all variables numeric besides the team name
+cleaned_sabermetrics_data = cleaned_sabermetrics_data %>%
+  mutate_at(vars(-Tm), as.numeric)
+
+head(cleaned_sabermetrics_data)
+
+```
+
+# Sabermetrics Plots
+
+```{R}
+ggplot(cleaned_sabermetrics_data, aes(x = W, y = RC.G)) + geom_point()
+
+```
+
+```{R}
+ggplot(cleaned_sabermetrics_data, aes(x = W)) + 
+         geom_point(aes(y = lgOBP, color = "lgOBP")) + 
+         geom_point(aes(y = lgSLG, color = "lgSLG")) +
+         geom_point(aes(y = lgBA, color = "lgBA"))
+
+```
+
+```{R}
+ggplot(cleaned_sabermetrics_data, aes(x = W, y = PwrSpd)) + geom_point() 
+
+```
+
+```{R}
+ggplot(cleaned_sabermetrics_data, aes(x = W, y = AIR)) + geom_point()
+
+```
+
+```{R}
+ggplot(cleaned_sabermetrics_data, aes(x = W, y = BtRuns)) + geom_point()
+
+```
+
+```{R}
+ggplot(cleaned_sabermetrics_data, aes(x = W)) + 
+         geom_point(aes(y = TotA, color = "TotA")) + 
+         geom_point(aes(y = SecA, color = "SecA")) +
+         geom_point(aes(y = ISO, color = "ISO"))
+
+```
+
+# Miscellaneous
+
+```{R}
+# Loading Moscellaneous Data
+msicellaneous_data = read.csv("C:\\Users\\student\\Documents\\DSE 6311\\Module 3\\Team_Misc_Data_2000_2024.csv")
+print(msicellaneous_data)
+
+```
+
+```{R}
+# Joining Win Loss Data to Miscellaneous Data
+cleaned_miscellaneous_data = msicellaneous_data %>%
+  left_join(Win_Loss_Data, by = c("Tm", "Year"))
+
+# Removing commas and other characters to make variables numeric
+cleaned_miscellaneous_data$Attendance <- as.numeric(gsub(",", "", cleaned_miscellaneous_data$Attendance))
+cleaned_miscellaneous_data$Attend.G <- as.numeric(gsub(",", "", cleaned_miscellaneous_data$Attend.G))
+cleaned_miscellaneous_data$Est..Payroll <- as.numeric(gsub("[$,]", "", cleaned_miscellaneous_data$Est..Payroll))
+cleaned_miscellaneous_data$Succ. <- as.numeric(gsub("%", "", cleaned_miscellaneous_data$Succ.)) / 100
+
+print(cleaned_miscellaneous_data)
+
+```
+
+# Miscellaneous Plots
+
+```{R}
+ggplot(cleaned_miscellaneous_data, aes(x = W, y = Attendance)) + geom_point()
+
+```
+
+```{R}
+ggplot(cleaned_miscellaneous_data, aes(x = W, y = Est..Payroll)) + geom_point()
+
+```
+
+```{R}
+ggplot(cleaned_miscellaneous_data, aes(x = W)) + 
+         geom_point(aes(y = BatAge, color = "BatAge")) + 
+         geom_point(aes(y = PAge, color = "PAge"))
+
+```
+
+```{R}
+ggplot(cleaned_miscellaneous_data, aes(x = W)) + 
+         geom_point(aes(y = X.A.S, color = "X.A.S")) + 
+         geom_point(aes(y = X.a.tA.S, color = "X.a.tA.S"))
+
+```
+
+```{R}
+ggplot(cleaned_miscellaneous_data, aes(x = W, y = Succ.)) + geom_point()
+
+```
