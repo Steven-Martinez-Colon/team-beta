@@ -18,6 +18,38 @@ names(csv_list) <- tools::file_path_sans_ext(basename(all_csv))
 
 ###############################################################################
 
+# create abbreviations for which csv file each column in full dataset came from
+abbreviations <- c("ab","ap","tf","md","pvb","pvp","sbm","sb","sp")
+
+# Remove index rows with no column name
+for (i in 1:length(csv_list)) {
+  working_csv <- csv_list[[i]]
+  working_csv <- working_csv[,names(working_csv) != ""]
+  csv_list[[i]] <- working_csv
+}
+
+# Add abbreviation to columns in each csv
+for (i in 1:length(csv_list)) {
+  working_csv <- csv_list[[i]]
+  for (col in colnames(working_csv)) {
+    # do not change the Tm and year columns so that full_join can be performed
+    if (col != "Tm" & col != "Year") {
+      new_col <- paste(abbreviations[i],col,sep = ".")
+      names(working_csv)[names(working_csv) == col] <- new_col
+    }
+  }
+  csv_list[[i]] <- working_csv
+}
+
+
+################################################################################
+
 full_dataset <- csv_list %>% reduce(full_join, by =c("Tm","Year"))
 
-colnames(full_dataset)
+response_file <- paste(getwd(),"/datasets/Team Success Variable Data - Sheet1.csv", sep="")
+
+response_data <- read.csv(response_file)
+
+full_dataset <- full_join(full_dataset,response_data, by=c("Tm", "Year"))
+
+write.csv(full_dataset, paste(dataset_folder,"/all_data.csv", sep=""))
