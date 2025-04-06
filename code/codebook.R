@@ -9,7 +9,8 @@ dataset_folder <- paste(getwd(),"/datasets",sep="")
 
 all_csv <- list.files(path = dataset_folder, pattern = "\\.csv$", full.names = TRUE)
 
-csv_list <- lapply(all_csv, read.csv)
+csv_list <- lapply(all_csv, function(file) read.csv(file, check.names = FALSE))
+
 names(csv_list) <- tools::file_path_sans_ext(basename(all_csv))
 
 ################################## Functions ###################################
