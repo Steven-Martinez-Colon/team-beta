@@ -33,7 +33,7 @@ num_cor_cols <- names(cor_data)[sapply(cor_data, is.numeric)]
 cor_matrix <- cor(cor_data %>% select(all_of(num_cor_cols)), use = "pairwise.complete.obs")
 
 # create heatmap of correlation values with corrplot
-corrplot::corrplot(cor_matrix, method = "color", tl.cex = 0.6, order = "hclust")
+corrplot::corrplot(cor_matrix, method = "color", tl.cex = 0.6, tl.pos = "n")
 
 # create heat map of correlation values with ggcorrplot
 ggcorrplot(cor_matrix, hc.order = TRUE, type = "lower", lab = FALSE)
@@ -46,7 +46,7 @@ remove_high_corr <- cor_data[, !names(cor_data) %in% high_corr]
 rhc_cor_matrix <- cor(remove_high_corr %>% select(any_of(num_cor_cols)),
                       use = "pairwise.complete.obs")
 
-corrplot::corrplot(rhc_cor_matrix, method = "color", tl.cex = 0.6, order = "hclust")
+corrplot::corrplot(rhc_cor_matrix, method = "color", tl.cex = 0.6, tl.pos = "n")
 
 ############## Debugging standard deviation is zero error from cor() ###########
 
