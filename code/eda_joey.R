@@ -33,7 +33,7 @@ num_cor_cols <- names(cor_data)[sapply(cor_data, is.numeric)]
 cor_matrix <- cor(cor_data %>% select(all_of(num_cor_cols)), use = "pairwise.complete.obs")
 
 # create heatmap of correlation values with corrplot
-corrplot::corrplot(cor_matrix, method = "color", tl.cex = 0.6, tl.pos = "n")
+initial_corrplot <- corrplot::corrplot(cor_matrix, method = "color", tl.cex = 0.6, tl.pos = "n")
 
 # create heat map of correlation values with ggcorrplot
 ggcorrplot(cor_matrix, hc.order = TRUE, type = "lower", lab = FALSE)
@@ -46,7 +46,17 @@ remove_high_corr <- cor_data[, !names(cor_data) %in% high_corr]
 rhc_cor_matrix <- cor(remove_high_corr %>% select(any_of(num_cor_cols)),
                       use = "pairwise.complete.obs")
 
-corrplot::corrplot(rhc_cor_matrix, method = "color", tl.cex = 0.6, tl.pos = "n")
+rhc_corrplot <- corrplot::corrplot(rhc_cor_matrix, method = "color", tl.cex = 0.6, tl.pos = "n")
+
+
+################################################################################
+
+pca_cols <- c("sbm.RC","sb.TB","sb.R","sb.RBI","sb.H","sb.LOB","pvb.PA","sp.L","sp.W-L%",
+              "pvp.R","sp.R","ap.RE24","sp.ER","pvb.WAA","pvp.RA9","sp.ERA","ap.OPS","sp.RA/G",
+              "tf.RA/G","sp.FIP","ap.SLG","sp.#P","tf.#Fld","sb.#Bat","ab.SO%","sb.SO","sb.SH","sbm.lgBA")
+
+cor_matrix <- cor(cor_data %>% select(all_of(pca_cols)), use = "pairwise.complete.obs")
+
 
 ############## Debugging standard deviation is zero error from cor() ###########
 
