@@ -12,6 +12,8 @@ library(corrplot)
 library(ggcorrplot)
 library(caret)
 library(moments)
+library(FactoMineR)
+library(factoextra)
 source("code/calcSplitRatio-3.R")
 
 dataset_folder <- paste(getwd(),"/final_data",sep="")
@@ -25,6 +27,25 @@ mlb_data <- read.csv(data_file, check.names = FALSE)
 mlb_data$Year <- as.factor(mlb_data$Year)
 mlb_data$Team.Success <- as.factor(mlb_data$Team.Success)
 
+## Create dataframe of CPI values for 2000-2024
+## https://www.usinflationcalculator.com/inflation/consumer-price-index-and-annual-percent-changes-from-1913-to-2008/
+cpi_table <- data.frame(
+  "Year" = as.factor(2000:2024),
+  "cpi" = c(172.2,177.1,179.9,184.0,188.9,195.3,201.6,207.3,215.303,214.537,
+            218.056,224.939,229.594,232.957,236.736,237.017,240.007,245.120,
+            251.107,255.657,258.811,270.970,292.655,304.702,313.689)
+)
+
+## Merge mlb_data with cpi_table by year
+mlb_data <- merge(mlb_data, cpi_table, by="Year")
+
+## Adjust for inflation
+base_cpi <- cpi_table$cpi[cpi_table$Year == "2024"]
+
+for (column in grep("Salary|Payroll", colnames(mlb_data), value = T)) {
+  new_col <- paste0(column,"adj")
+  mlb_data[new_col] <- mlb_data[column] * (base_cpi / mlb_data$cpi)
+}
 
 ############################### Clean Data #####################################
 
