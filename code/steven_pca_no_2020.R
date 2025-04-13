@@ -255,10 +255,104 @@ print(
 )
 
 
+################################## PCA No Year Variable #############################
+
+# removing the Year variable
+df_no_year <- df_no_2020 %>% 
+  select(-Year)
 
 
+# Keep only numeric columns and drop any columns that have NAs
+df_numeric_no_year <- df_no_year %>%
+  select(where(is.numeric)) %>%
+  select(where(~ !any(is.na(.))))
+
+# Scale the data
+df_scaled_no_year <- scale(df_numeric_no_year)
+
+# Run PCA
+pca_result_no_year <- prcomp(df_scaled_no_year, center = TRUE, scale. = TRUE)
+
+# Scree plot
+screeplot(pca_result_no_year, type = "lines", main = "Scree Plot")
+
+# Cumulative proportion of variance explained
+summary(pca_result_no_year)
+
+# View loadings
+loadings_no_year <- pca_result_no_year$rotation
+View(loadings_no_year)
+
+# Top 10 contributing variables to PC1
+head(sort(abs(loadings_no_year[,1]), decreasing = TRUE), 10)
+
+# PC2
+head(sort(abs(loadings_no_year[,2]), decreasing = TRUE), 10)
+
+# PC3
+head(sort(abs(loadings_no_year[,3]), decreasing = TRUE), 10)
+
+# PC4
+head(sort(abs(loadings_no_year[,4]), decreasing = TRUE), 10)
 
 
+###################### K-Means #################
+
+# Using the first four PCs for the K-Means Model
+pca_data_no_year <- as.data.frame(pca_result_no_year$x[, 1:4])
+
+# Using the Elbow Method to pick a k value
+wss <- vector()
+for (k in 1:10) {
+  km <- kmeans(pca_data_no_year, centers = k, nstart = 25)
+  wss[k] <- km$tot.withinss
+}
+
+# Looking at the plot
+plot(1:10, wss, type = "b", pch = 19,
+     xlab = "Number of Clusters (k)",
+     ylab = "Total Within-Cluster Sum of Squares",
+     main = "Elbow Method for Optimal k")
+
+# Performing kmeans
+set.seed(42)
+kmeans_result_no_year <- kmeans(pca_data_no_year, centers = 3, nstart = 25)
+
+# Add cluster labels to your data
+pca_data_no_year$Cluster <- as.factor(kmeans_result_no_year$cluster)
+pca_data_no_year$TeamSuccess <- as.factor(df_no_2020$Team.Success)  # Adding the team success variable
+pca_data_no_year$Tm <- as.factor(df_no_2020$Tm)  # Adding the team names
+pca_data_no_year$Year <- as.factor(df_no_2020$Year)   # Adding year
+
+# Table to see the distribution of team success in each cluster
+table(Cluster = pca_data_no_year$Cluster, TeamSuccess = pca_data_no_year$TeamSuccess)
+
+
+# Filter for WS winners (TeamSuccess == 4)
+ws_winners_no_year <- subset(pca_data_no_year, TeamSuccess == 4)
+
+# Looking at the k-means clustering with WS winners highlighted
+ggplot() +
+  geom_point(data = pca_data_no_year, aes(x = PC1, y = PC2, color = Cluster), alpha = 0.6) +
+  geom_point(data = subset(pca_data_no_year, TeamSuccess == 4),
+             aes(x = PC1, y = PC2),
+             color = "black", size = 2, shape = 21, stroke = 1) +
+  labs(title = "K-Means Clustering on PCA-Reduced Data",
+       subtitle = "World Series Winners Highlighted",
+       x = "PC1", y = "PC2") +
+  theme_minimal()
+
+
+# Making a clean dataset in order to find the means of the variables in each cluster
+df_clean_no_year <- df_numeric_no_year
+df_clean_no_year$Cluster <- pca_data_no_year$Cluster
+
+# Grouping by cluster and getting the mean for the variables
+cluster_means_no_year <- df_clean_no_year %>%
+  group_by(Cluster) %>%
+  summarise(across(where(is.numeric), mean, na.rm = TRUE))
+
+View(cluster_means_no_year)
 
 
 
