@@ -23,9 +23,15 @@ data_file <- paste(dataset_folder,"/final_dataset.csv", sep = "")
 ## Read data without changing special chars in column names
 mlb_data <- read.csv(data_file, check.names = FALSE)
 
-## Convert Tema and Year to factors
+
+###################### Pre-PCA Feature Engineering #############################
+
+## Convert Year to factor
 mlb_data$Year <- as.factor(mlb_data$Year)
-mlb_data$Team.Success <- as.factor(mlb_data$Team.Success)
+
+## Change Team.Success from four possible values to two
+## 0 = missed playoffs, 1 = made the playoffs
+mlb_data$Team.Success <- ifelse(mlb_data$Team.Success == 1,0,1)
 
 ## Create dataframe of CPI values for 2000-2024
 ## https://www.usinflationcalculator.com/inflation/consumer-price-index-and-annual-percent-changes-from-1913-to-2008/
@@ -51,16 +57,20 @@ for (column in salary_cols) {
   mlb_data[new_col] <- mlb_data[column] * (base_cpi / mlb_data$cpi)
 }
 
+## Change Team.Success from four possible values to two
+## 0 = missed playoffs, 1 = made the playoffs
+mlb_data$Team.Success <- ifelse(mlb_data$Team)
+
 ############################### Clean Data #####################################
 
 ## Remove salary cols not adjusted for inflation
 mlb_data <- mlb_data %>% select(!all_of(salary_cols))
 
-## Set rownames equal to concatenation of Team and Year
-rownames(mlb_data) <- paste(mlb_data$Tm, mlb_data$Year, sep = "_")
-
 ## Filter out data from 2020 season
 mlb_data <- mlb_data %>% filter(Year != "2020")
+
+## Set rownames equal to concatenation of Team and Year
+rownames(mlb_data) <- paste(mlb_data$Tm, mlb_data$Year, sep = "_")
 
 ## Drop columns with NA values
 no_na_cols <- names(mlb_data)[sapply(mlb_data, function(x) !any(is.na(x)))]
@@ -68,7 +78,7 @@ mlb_data <- mlb_data %>% select(all_of(no_na_cols))
 
 ## Drop non-numeric cols
 num_cols <- names(mlb_data)[sapply(mlb_data, is.numeric)]
-mlb_data <- mlb_data %>% select(all_of(num_cols))
+pca_mlb_data <- mlb_data %>% select(all_of(num_cols))
 
 
 ################################# PCA ##########################################
@@ -80,7 +90,7 @@ mlb_data <- mlb_data %>% select(all_of(num_cols))
 # scaled_data <- scale(mlb_data)
 
 ## PCA
-data.pca <- princomp(mlb_data, cor = T)
+data.pca <- princomp(pca_mlb_data, cor = T)
 summary(data.pca)
 
 ## View loadings
