@@ -42,12 +42,19 @@ mlb_data <- merge(mlb_data, cpi_table, by="Year")
 ## Adjust for inflation
 base_cpi <- cpi_table$cpi[cpi_table$Year == "2024"]
 
-for (column in grep("Salary|Payroll", colnames(mlb_data), value = T)) {
+## Get salary and payroll columns
+salary_cols <- grep("Salary|Payroll", colnames(mlb_data), value = T)
+
+## Create columns adjusted for for inflation
+for (column in salary_cols) {
   new_col <- paste0(column,"adj")
   mlb_data[new_col] <- mlb_data[column] * (base_cpi / mlb_data$cpi)
 }
 
 ############################### Clean Data #####################################
+
+## Remove salary cols not adjusted for inflation
+mlb_data <- mlb_data %>% select(!all_of(salary_cols))
 
 ## Set rownames equal to concatenation of Team and Year
 rownames(mlb_data) <- paste(mlb_data$Tm, mlb_data$Year, sep = "_")
@@ -66,7 +73,26 @@ mlb_data <- mlb_data %>% select(all_of(num_cols))
 
 ################################# PCA ##########################################
 
+## https://www.datacamp.com/tutorial/pca-analysis-r
+## https://bryanhanson.github.io/LearnPCA/articles/Vig_07_Functions_PCA.html
 
+## normalize numeric data
+# scaled_data <- scale(mlb_data)
+
+## PCA
+data.pca <- princomp(mlb_data, cor = T)
+summary(data.pca)
+
+## View loadings
+View(data.pca$loadings[,1:75])
+
+## Scree plot
+fviz_eig(data.pca, addlabels = T, ncp = 20)
+
+## Biplot with cos2
+fviz_pca_var(data.pca, col.var = "cos2",
+             gradient.cols = c("black", "orange", "green"),
+             repel = T)
 
 ############################### Split Data #####################################
 
