@@ -71,8 +71,8 @@ for (column in salary_cols) {
 
 ############################### Clean Data #####################################
 
-## Remove salary cols not adjusted for inflation
-mlb_data <- mlb_data %>% select(!all_of(salary_cols))
+## Remove cpi and salary cols not adjusted for inflation
+mlb_data <- mlb_data %>% select(!all_of(c(cpi,salary_cols)))
 
 ## Filter out data from 2020 season
 mlb_data <- mlb_data %>% filter(Year != "2020")
@@ -86,6 +86,11 @@ mlb_data <- mlb_data %>% select(all_of(no_na_cols))
 
 ## Drop non-numeric cols
 num_cols <- names(mlb_data)[sapply(mlb_data, is.numeric)]
+
+## Create final MLB data set
+mlb_df <- mlb_data %>% select(all_of(num_cols)) %>% mutate(Team.Success = mlb_data$Team.Success)
+
+## Create dataset for PCA
 pca_mlb_data <- mlb_data %>% select(all_of(num_cols))
 
 
@@ -118,7 +123,7 @@ pc_df$Team.Success <- mlb_data$Team.Success
 
 ############################### Split Data #####################################
 
-## Calculate ideal train:test split ratio
+## Calculate ideal train:test split ratio for PCA scores data
 ratio <- calcSplitRatio(df = pc_df) ## 0.78:0.22
 
 ## Get training index and stratify by response
@@ -129,15 +134,18 @@ pc_train <- pc_df[train_index, ]
 pc_test <- pc_df[-train_index, ]
 
 
+
+
 ############################### Encoding #######################################
+
 
 
 ###################### Imputation of Missing Values  ###########################
 
-
+any(is.na(pc_train)) # should be FALSE
+any(is.na(pc_test)) # should be FALSE
 
 ###################### Perform Arithmetic Transformation #######################
-
 
 
 ###################### Normalize, center, and/or scale #########################
