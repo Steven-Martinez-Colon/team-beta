@@ -32,6 +32,18 @@ mlb_data$Year <- as.factor(mlb_data$Year)
 ## Change Team.Success from four possible values to two
 ## 0 = missed playoffs, 1 = made the playoffs
 mlb_data$Team.Success <- ifelse(mlb_data$Team.Success == 1,0,1)
+mlb_data$Team.Success <- as.factor(mlb_data$Team.Success)
+
+## Check how observations are distributed among new response classes
+freq_table <- table(mlb_data$Team.Success)                # Frequency count
+percent_table <- prop.table(freq_table) * 100  # Convert to percentages
+
+## Create summary table of response class distribution
+summary_table <- data.frame(
+  Team.Success = names(freq_table),
+  Frequency = as.vector(freq_table),
+  Percentage = round(as.vector(percent_table), 2)
+)
 
 ## Create dataframe of CPI values for 2000-2024
 ## https://www.usinflationcalculator.com/inflation/consumer-price-index-and-annual-percent-changes-from-1913-to-2008/
@@ -56,10 +68,6 @@ for (column in salary_cols) {
   new_col <- paste0(column,"adj")
   mlb_data[new_col] <- mlb_data[column] * (base_cpi / mlb_data$cpi)
 }
-
-## Change Team.Success from four possible values to two
-## 0 = missed playoffs, 1 = made the playoffs
-mlb_data$Team.Success <- ifelse(mlb_data$Team)
 
 ############################### Clean Data #####################################
 
@@ -104,17 +112,27 @@ fviz_pca_var(data.pca, col.var = "cos2",
              gradient.cols = c("black", "orange", "green"),
              repel = T)
 
+## Create dataframe with first 20 principal components
+pc_df <- as.data.frame(data.pca$scores[,1:20])
+pc_df$Team.Success <- mlb_data$Team.Success
+
 ############################### Split Data #####################################
 
-calcSplitRatio(df = mlb_data)
+## Calculate ideal train:test split ratio
+ratio <- calcSplitRatio(df = pc_df) ## 0.78:0.22
+
+## Get training index and stratify by response
+set.seed(123)
+train_index <- createDataPartition(pc_df$Team.Success, p = ratio, list = F)
+
+pc_train <- pc_df[train_index, ]
+pc_test <- pc_df[-train_index, ]
+
 
 ############################### Encoding #######################################
 
 
-
-
 ###################### Imputation of Missing Values  ###########################
-
 
 
 
