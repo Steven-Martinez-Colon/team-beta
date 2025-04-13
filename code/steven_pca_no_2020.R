@@ -117,9 +117,6 @@ write.csv(pca_data, "pca_data.csv", row.names = FALSE)
 table(Cluster = pca_data$Cluster, TeamSuccess = pca_data$TeamSuccess)
 
 
-# Filter for WS winners (TeamSuccess == 4)
-ws_winners <- subset(pca_data, TeamSuccess == 4)
-
 # Looking at the k-means clustering with WS winners highlighted
 ggplot() +
   geom_point(data = pca_data, aes(x = PC1, y = PC2, color = Cluster), alpha = 0.6) +
@@ -145,7 +142,31 @@ View(cluster_means)
 
 
 
+####### Making a table to show distribution of team success across clusters #######
+library(ggplot2)
+library(reshape2)
 
+# Create the table as a matrix
+conf_matrix <- table(Cluster = pca_data$Cluster, TeamSuccess = pca_data$TeamSuccess)
+
+# Convert to data frame for ggplot
+conf_df <- as.data.frame(conf_matrix)
+colnames(conf_df) <- c("Cluster", "TeamSuccess", "Count")
+
+# Make sure factors are ordered
+conf_df$Cluster <- factor(conf_df$Cluster)
+conf_df$TeamSuccess <- factor(conf_df$TeamSuccess)
+
+# Plot heatmap
+ggplot(conf_df, aes(x = TeamSuccess, y = Cluster, fill = Count)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Count), size = 5, fontface = "bold") +
+  scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
+  labs(title = "Distribution of Team Success Across Clusters",
+       x = "Team Success",
+       y = "Cluster",
+       fill = "Count") +
+  theme_minimal(base_size = 14)
 
 
 
