@@ -68,6 +68,7 @@ summary(pca_result)
 loadings <- pca_result$rotation
 View(loadings)
 
+
 # Top 10 contributing variables to PC1
 head(sort(abs(loadings[,1]), decreasing = TRUE), 10)
 
@@ -84,7 +85,7 @@ head(sort(abs(loadings[,4]), decreasing = TRUE), 10)
 ###################### K-Means #################
 
 # Using the first four PCs for the K-Means Model
-pca_data <- as.data.frame(pca_result$x[, 1:14])
+pca_data <- as.data.frame(pca_result$x[, 1:20])
 
 # Using the Elbow Method to pick a k value
 wss <- vector()
@@ -101,13 +102,16 @@ plot(1:10, wss, type = "b", pch = 19,
 
 # Performing kmeans
 set.seed(42)
-kmeans_result <- kmeans(pca_data, centers = 4, nstart = 25)
+kmeans_result <- kmeans(pca_data, centers = 3, nstart = 25)
 
 # Add cluster labels to your data
 pca_data$Cluster <- as.factor(kmeans_result$cluster)
 pca_data$TeamSuccess <- as.factor(df_no_2020$Team.Success)  # Adding the team success variable
 pca_data$Tm <- as.factor(df_no_2020$Tm)  # Adding the team names
 pca_data$Year <- as.factor(df_no_2020$Year)   # Adding year
+
+# Writing the pca data in a csv file
+write.csv(pca_data, "pca_data.csv", row.names = FALSE)
 
 # Table to see the distribution of team success in each cluster
 table(Cluster = pca_data$Cluster, TeamSuccess = pca_data$TeamSuccess)
@@ -138,6 +142,31 @@ cluster_means <- df_clean %>%
   summarise(across(where(is.numeric), mean, na.rm = TRUE))
 
 View(cluster_means)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Ignore this bottom code.
+# It is not needed for our analysis. It was just an exploration.
 
 
 ############################### Looking at Runner Ups #######################
@@ -255,6 +284,8 @@ print(
 )
 
 
+
+
 ################################## PCA No Year Variable #############################
 
 # removing the Year variable
@@ -296,10 +327,10 @@ head(sort(abs(loadings_no_year[,3]), decreasing = TRUE), 10)
 head(sort(abs(loadings_no_year[,4]), decreasing = TRUE), 10)
 
 
-###################### K-Means #################
+###################### K-Means No Year Variable #################
 
 # Using the first four PCs for the K-Means Model
-pca_data_no_year <- as.data.frame(pca_result_no_year$x[, 1:4])
+pca_data_no_year <- as.data.frame(pca_result_no_year$x[, 1:20])
 
 # Using the Elbow Method to pick a k value
 wss <- vector()
