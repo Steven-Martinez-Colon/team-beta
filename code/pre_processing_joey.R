@@ -14,6 +14,7 @@ library(caret)
 library(moments)
 library(FactoMineR)
 library(factoextra)
+library(MASS)
 source("code/calcSplitRatio-3.R")
 
 dataset_folder <- paste(getwd(),"/final_data",sep="")
@@ -72,7 +73,7 @@ for (column in salary_cols) {
 ############################### Clean Data #####################################
 
 ## Remove cpi and salary cols not adjusted for inflation
-mlb_data <- mlb_data %>% select(!all_of(c(cpi,salary_cols)))
+mlb_data <- mlb_data %>% dplyr::select(-all_of(c("cpi",salary_cols)))
 
 ## Filter out data from 2020 season
 mlb_data <- mlb_data %>% filter(Year != "2020")
@@ -82,16 +83,76 @@ rownames(mlb_data) <- paste(mlb_data$Tm, mlb_data$Year, sep = "_")
 
 ## Drop columns with NA values
 no_na_cols <- names(mlb_data)[sapply(mlb_data, function(x) !any(is.na(x)))]
-mlb_data <- mlb_data %>% select(all_of(no_na_cols))
+mlb_data <- mlb_data %>% dplyr::select(all_of(no_na_cols))
 
 ## Drop non-numeric cols
 num_cols <- names(mlb_data)[sapply(mlb_data, is.numeric)]
 
 ## Create final MLB data set
-mlb_df <- mlb_data %>% select(all_of(num_cols)) %>% mutate(Team.Success = mlb_data$Team.Success)
+mlb_df <- mlb_data %>% dplyr::select(all_of(num_cols)) %>% mutate(Team.Success = mlb_data$Team.Success)
 
-## Create dataset for PCA
-pca_mlb_data <- mlb_data %>% select(all_of(num_cols))
+
+############################### Split Data #####################################
+
+## Calculate ideal train:test split ratio for PCA scores data
+ratio <- calcSplitRatio(df = mlb_df) ## 0.78:0.22
+
+
+############################### Encoding #######################################
+
+
+
+###################### Imputation of Missing Values  ###########################
+
+
+
+###################### Perform Arithmetic Transformation #######################
+
+transform_mlb <- mlb_df
+
+shapiro_pvalues <- sapply(transform_mlb %>% dplyr::select(all_of(num_cols)), function (col) {
+  shapiro.test(col)$p.value
+})
+
+shapiro_results <- data.frame(
+  Variable = names(shapiro_pvalues),
+  P_Value = shapiro_pvalues
+)
+
+## Get non-normal columns with Shapiro-Wilks p-value < 0.05
+non_normal_cols <- names(shapiro_pvalues[shapiro_pvalues < 0.05])
+
+## Apply Box-Cox transformation to non-normal cols
+for (colname in non_normal_cols) {
+  col <- transform_mlb[[colname]]
+  
+  # Shift if necessary (Box-Cox requires > 0)
+  if (any(col <= 0, na.rm = TRUE)) {
+    min_val <- min(col, na.rm = TRUE)
+    col <- col + abs(min_val) + 1
+  }
+  
+  # Create temporary df for lm fitting
+  df_temp <- data.frame(y = col)
+  
+  # Fit linear model (Box-Cox requires a model)
+  # Using dummy response variable
+  lm_model <- lm(y ~ 1, df_temp)
+  
+  # Apply Box-Cox transformation
+  bc <- boxcox(lm_model, lambda = seq(-5, 5, 0.1), plotit = FALSE)
+  lambda_opt <- bc$x[which.max(bc$y)]
+  transformed_col <- if (lambda_opt == 0) log(col) else (col^lambda_opt - 1) / lambda_opt
+  
+  # Replace original column with transformed values
+  transform_mlb[[colname]] <- transformed_col
+}
+
+View(transform_mlb)
+
+
+###################### Normalize, center, and/or scale #########################
+
 
 
 ################################# PCA ##########################################
@@ -101,6 +162,9 @@ pca_mlb_data <- mlb_data %>% select(all_of(num_cols))
 
 ## normalize numeric data
 # scaled_data <- scale(mlb_data)
+
+## Create dataset for PCA
+pca_mlb_data <- mlb_data %>% select(all_of(num_cols))
 
 ## PCA
 data.pca <- princomp(pca_mlb_data, cor = T)
@@ -120,34 +184,3 @@ fviz_pca_var(data.pca, col.var = "cos2",
 ## Create dataframe with first 20 principal components
 pc_df <- as.data.frame(data.pca$scores[,1:20])
 pc_df$Team.Success <- mlb_data$Team.Success
-
-############################### Split Data #####################################
-
-## Calculate ideal train:test split ratio for PCA scores data
-ratio <- calcSplitRatio(df = pc_df) ## 0.78:0.22
-
-## Get training index and stratify by response
-set.seed(123)
-train_index <- createDataPartition(pc_df$Team.Success, p = ratio, list = F)
-
-pc_train <- pc_df[train_index, ]
-pc_test <- pc_df[-train_index, ]
-
-
-
-
-############################### Encoding #######################################
-
-
-
-###################### Imputation of Missing Values  ###########################
-
-any(is.na(pc_train)) # should be FALSE
-any(is.na(pc_test)) # should be FALSE
-
-###################### Perform Arithmetic Transformation #######################
-
-
-###################### Normalize, center, and/or scale #########################
-
-
