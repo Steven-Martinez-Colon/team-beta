@@ -111,7 +111,7 @@ pca_data$Tm <- as.factor(df_no_2020$Tm)  # Adding the team names
 pca_data$Year <- as.factor(df_no_2020$Year)   # Adding year
 
 # Writing the pca data in a csv file
-write.csv(pca_data, "pca_data.csv", row.names = FALSE)
+# write.csv(pca_data, "pca_data.csv", row.names = FALSE)
 
 # Table to see the distribution of team success in each cluster
 table(Cluster = pca_data$Cluster, TeamSuccess = pca_data$TeamSuccess)
@@ -127,8 +127,6 @@ ggplot() +
        subtitle = "World Series Winners Highlighted",
        x = "PC1", y = "PC2") +
   theme_minimal()
-
-
 # Making a clean dataset in order to find the means of the variables in each cluster
 df_clean <- df_numeric
 df_clean$Cluster <- pca_data$Cluster
