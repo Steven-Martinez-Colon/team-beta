@@ -164,7 +164,7 @@ View(transform_mlb)
 # scaled_data <- scale(mlb_data)
 
 ## Create dataset for PCA
-pca_mlb_data <- mlb_data %>% select(all_of(num_cols))
+pca_mlb_data <- transform_mlb %>% dplyr::select(all_of(num_cols))
 
 ## PCA
 data.pca <- princomp(pca_mlb_data, cor = T)
