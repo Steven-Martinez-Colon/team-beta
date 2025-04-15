@@ -174,8 +174,10 @@ summary(data.pca)
 View(data.pca$loadings[,1:75])
 
 ## Scree plot
-fviz_eig(data.pca, addlabels = T, ncp = 20)
-  
+scree_plot <- fviz_eig(data.pca, addlabels = T, ncp = 20)
+scree_plot
+
+ggsave("images/ggscreeplot.png", scree_plot, height= 5, width = 8)
 
 ## Biplot with cos2
 fviz_pca_var(data.pca, col.var = "cos2",
