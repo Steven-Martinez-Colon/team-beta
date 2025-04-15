@@ -175,6 +175,7 @@ View(data.pca$loadings[,1:75])
 
 ## Scree plot
 fviz_eig(data.pca, addlabels = T, ncp = 20)
+  
 
 ## Biplot with cos2
 fviz_pca_var(data.pca, col.var = "cos2",
