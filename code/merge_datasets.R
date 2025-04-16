@@ -1,4 +1,6 @@
+## Written by Joseph Annand
 
+## Load libraries
 library(tidyr)
 library(dplyr)
 library(forcats)
@@ -10,10 +12,13 @@ library(readr)
 
 dataset_folder <- paste(getwd(),"/cleaned_data",sep="")
 
+## List the csv files in the "datasets" folder
 all_csv <- list.files(path = dataset_folder, pattern = "\\.csv$", full.names = TRUE)
 
+## Read each file in the list
 csv_list <- lapply(all_csv, function(file) read.csv(file, check.names = FALSE))
 
+## Set names of each file in the list to the file name without .csv extension
 names(csv_list) <- tools::file_path_sans_ext(basename(all_csv))
 
 ###############################################################################
