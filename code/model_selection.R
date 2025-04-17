@@ -23,7 +23,7 @@ load_libraries(c("tidyverse", "lubridate", "stats", "ggplot2", "corrplot", "stri
                  "tidymodels", "modeldata", "themis", "vip", "baguette", "janitor", "rvest",
                  "yardstick", "gsheet", "caret", "randomForest", "here", "tibble", "dplyr", "ISAR",
                  "tidyr", "mgcv", "teamcolors", "baseballr", "Lahman", "remotes", "ggcorrplot", "broom", "readr",
-                 "glmnet", "xgboost", "Matrix", "Metrics"))
+                 "glmnet", "xgboost", "Matrix", "Metrics", "reshape2"))
 
 # Load only the necessary functions from 'car'
 library(car, exclude = "select")
@@ -135,8 +135,23 @@ predicted <- knn(train = train_x, test = test_x, cl = train_y, k = 11)
 accuracy <- mean(predicted == test_y)
 print(accuracy)
 
-# Confusion matrix
+# Looking at Confusion matrix
 table(Predicted = predicted, Actual = test_y)
+
+# Creating a heatmap table for the confusion matrix
+conf_matrix <- table(Predicted = predicted, Actual = test_y) # Create the table as a matrix
+conf_df <- as.data.frame(conf_matrix) # Convert to data frame for ggplot
+
+# Plot heatmap
+ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 5, fontface = "bold") +
+  scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
+  labs(title = "Distribution of Team Success Across Clusters",
+       x = "Team Success",
+       y = "Predicted",
+       fill = "Count") +
+  theme_minimal(base_size = 14)
 
 
 # Visualizing PC1 vs PC2 colored by Team Success
@@ -153,10 +168,6 @@ ggplot() +
        subtitle = "World Series Winners Highlighted",
        x = "PC1", y = "PC2") +
   theme_minimal()
-
-
-
-
 
 
 
