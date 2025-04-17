@@ -1,4 +1,6 @@
+## Written by Joseph Annand
 
+## Load libraries
 library(tidyr)
 library(dplyr)
 library(stringr)
@@ -7,16 +9,22 @@ library(readr)
 
 dataset_folder <- paste(getwd(),"/datasets",sep="")
 
+## List the csv files in the "datasets" folder
 all_csv <- list.files(path = dataset_folder, pattern = "\\.csv$", full.names = TRUE)
 
+## Read each file in the list
 csv_list <- lapply(all_csv, function(file) read.csv(file, check.names = FALSE))
 
+## Set names of each file in the list to the file name without .csv extension
 names(csv_list) <- tools::file_path_sans_ext(basename(all_csv))
 
 ################################## Functions ###################################
 
 # Function to rename columns based on first row values
 rename_columns <- function(df) {
+  ## @df = dataframe for which columns are to be renamed
+  ## returns dataframe
+  
   cols_to_rename <- colnames(df)[colnames(df) != "Year"]  # Identify columns to rename
   
   colnames(df)[colnames(df) != "Year"] <- as.character(df[1, cols_to_rename])  # Rename to first value in the column
@@ -30,12 +38,18 @@ rename_columns <- function(df) {
 
 
 drop_na_cols <- function(df) {
+  ## Drop columns with all NA values
+  ## @df = dataframe for which ccolumns with all NA values are removed
+  
   df <- df[, colSums(is.na(df)) < nrow(df)]
 }
 
 
 get_unique_columns <- function(df_list) {
-  # Extract column names from all dataframes and combine them into one vector
+  ## Extract column names from all dataframes and combine them into one vector
+  ## @df_list = list of dataframes from which unique column names are extracted
+  ## returns vector of unique column names
+  
   all_columns <- unlist(lapply(df_list, colnames))
   
   # Get unique column names
@@ -45,8 +59,13 @@ get_unique_columns <- function(df_list) {
 }
 
 
-# Function to add missing columns to any dataframe in df_list
+
 add_missing_columns <- function(df_list, columns_to_add) {
+  ## Add missing columns to any dataframe in df_list
+  ## @df_list = list of dataframes to which missing columns may be added
+  ## @columns_to_add = vector of column names
+  ## returns list of dataframes with add column names
+  
   # Iterate through each dataframe in the list
   df_list <- lapply(df_list, function(df) {
     # Check for columns that are missing
@@ -65,12 +84,20 @@ add_missing_columns <- function(df_list, columns_to_add) {
 
 
 get_common_columns <- function(df_list) {
+  ## Get the common columns between all dataframes in the list as a vector
+  ## @df_list = list of dataframes from which common columns are determined
+  ## returns vector of common columns among dataframes in df_list
+  
   common_cols <- Reduce(intersect, lapply(df_list, colnames))
   return(common_cols)
 }
 
 
 remove_non_observations <- function(df) {
+  ## Remove rows that are not actual observations but are blank or league averages
+  ## left over from web scraping
+  ## @df = dataframe from whcih rows are removed
+  ## returns dataframe without rows that are not valuable observations
   
   bad_values <- c("Tm","","League Average")
   
@@ -80,7 +107,7 @@ remove_non_observations <- function(df) {
   return(df)
 }
 
-################################################################################
+########################## Advanced Batting clean up ###########################
 
 current_csv <- csv_list[[1]]
 
@@ -137,7 +164,7 @@ write.csv(df_full_joined, file = paste(getwd(),"/cleaned_data/","cleaned_",names
 names(csv_list)[1]
 
 
-################################################################################
+########################## Advanced Pitching clean up ##########################
 
 current_csv <- csv_list[[2]]
 
@@ -193,11 +220,13 @@ write.csv(df_full_joined, file = paste(getwd(),"/cleaned_data/","cleaned_",names
 
 names(csv_list)[2]
 
-################################################################################
+####################### Cleaning Remaining Dataframes ##########################
 
-
+## Loop through the remaining dataframe sin the list of CSV files
 for (i in 3:length(csv_list)) {
+  ## Remove non-observations from the dataframe
   csv_list[[i]] <- remove_non_observations(csv_list[[i]])
+  ## write the cleaned dataframe to a CSV file
   write.csv(csv_list[[i]], file = paste(getwd(),"/cleaned_data/","cleaned_",names(csv_list)[i],".csv",sep = ""))
 }
 
