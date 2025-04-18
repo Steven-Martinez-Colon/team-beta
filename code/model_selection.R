@@ -170,7 +170,12 @@ ggplot() +
   theme_minimal()
 
 
+############################# Joey's Code ######################################
 
+head(df) # testing
+
+# Looking at Confusion matrix
+table(Predicted = predicted, Actual = test_y)
 
 
 
