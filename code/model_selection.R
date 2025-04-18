@@ -170,19 +170,6 @@ ggplot() +
   theme_minimal()
 
 
-############################# Joey's Code ######################################
-### comment
-head(df) # testing
-### github test
-# Looking at Confusion matrix
-table(Predicted = predicted, Actual = test_y)
-
-# James Keegan
-
-
-### this is Joey's commit line
-
-
 
 
 
