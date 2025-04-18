@@ -171,9 +171,9 @@ ggplot() +
 
 
 ############################# Joey's Code ######################################
-
+### comment
 head(df) # testing
-
+### github test
 # Looking at Confusion matrix
 table(Predicted = predicted, Actual = test_y)
 
