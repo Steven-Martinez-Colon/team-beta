@@ -1,0 +1,157 @@
+---
+title: "DSE 6311 PCA and K-means New TS Variable"
+author: "James Keegan"
+date: "2025-04-17"
+output: html_document
+---
+
+# Loading Library Functions (from Steven Martinez)
+
+```{R}
+# Loading Libraries Function
+load_libraries <- function(packages) {
+  # Check for missing packages
+  missing_packages <- packages[!(packages %in% installed.packages()[, "Package"])]
+  
+  # install missing packages
+  if(length(missing_packages) > 0) {
+    install.packages(missing_packages)
+  }
+  
+  # Load all packages
+  lapply(packages, library, character.only = TRUE)
+  
+  cat("All packages are loaded succesfully.\n")
+}
+
+```
+
+```{R}
+# Loading necessary libraries 
+load_libraries(c("tidyverse", "lubridate", "stats", "ggplot2", "corrplot", "stringr", "stringi","tidymodels", "modeldata", "themis", "vip", "baguette", "janitor", "rvest",
+"yardstick", "gsheet", "caret", "randomForest", "here", "tibble", "dplyr", "ISAR", "tidyr", "mgcv","teamcolors", "baseballr", "Lahman", "remotes", "ggcorrplot", "broom", "readr", "glmnet", "xgboost", "Matrix", "Metrics"))
+
+# Load only the necessary functions from 'car'
+library(car, exclude = "select")
+
+# Turning off warning messages
+options(warnings = 0)
+
+```
+
+```{R}
+# Loading datasets
+final_data <- read_csv("C:\\Users\\student\\Documents\\DSE 6311\\Module 4\\final_dataset.csv")
+new_success_variable = read.csv("C:\\Users\\student\\Documents\\DSE 6311\\Module 5\\Team Success Variable Data Playoffs or No Playoffs - Sheet1.csv")
+
+# Removing Team Success Variable from the final data
+final_data = final_data %>%
+  select(-Team.Success)
+
+# Joining the two new success variable to final data
+final_data = final_data %>%
+  left_join(new_success_variable, by = c("Tm", "Year"))
+
+# Removing the year 2020 
+final_data_no_2020 <- final_data %>% 
+  filter(Year != 2020)
+head(final_data_no_2020)
+
+```
+
+# Running My PCA
+
+```{R}
+# Selecting Only Numeric Columns
+final_data_numeric <- final_data_no_2020 %>%
+  select(where(is.numeric)) %>%
+  select(where(~ !any(is.na(.))))
+
+# Scaling the data
+final_data_scaled <- scale(final_data_numeric)
+
+# Running the PCA
+pca_no_2020 <- prcomp(final_data_scaled, center = TRUE, scale. = TRUE)
+summary(pca_no_2020)
+
+```
+
+```{R}
+# Creating Scree Plot
+screeplot(pca_no_2020, type = "lines", main = "Scree Plot")
+
+```
+
+```{R}
+# Viewing loadings
+loadings <- pca_no_2020$rotation
+head(loadings)
+
+```
+
+```{R}
+# Top 10 contributing variables to PC1
+head(sort(abs(loadings[,1]), decreasing = TRUE), 10)
+
+```
+
+```{R}
+# Top 10 contributing variables to PC2
+head(sort(abs(loadings[,2]), decreasing = TRUE), 10)
+
+```
+
+```{R}
+# Top 10 contributing variables to PC3
+head(sort(abs(loadings[,3]), decreasing = TRUE), 10)
+
+```
+
+```{R}
+# Top 10 contributing variables to PC4
+head(sort(abs(loadings[,4]), decreasing = TRUE), 10)
+
+```
+
+# Running My K-Means
+
+```{R}
+# Using the first three PCs for the K-Means Model
+pca_data <- as.data.frame(pca_no_2020$x[, 1:20])
+head(pca_data)
+
+```
+
+```{R}
+# Elbow Method (Help from Steven Martinez)
+wss <- vector()
+for (k in 1:10) {
+  km <- kmeans(pca_data, centers = k, nstart = 25)
+  wss[k] <- km$tot.withinss
+}
+
+# Plotting Elbow Method
+plot(1:10, wss, type = "b", pch = 19,
+     main = "Elbow Method for Optimal k")
+
+```
+
+```{R}
+# Performing k-means
+set.seed(71)
+kmeans_no_2020 <- kmeans(pca_data, centers = 2, nstart = 25)
+
+# Adding labels and columns to the PCA data
+pca_data$Cluster <- as.factor(kmeans_no_2020$cluster)
+pca_data$Tm <- as.factor(final_data_no_2020$Tm)  
+pca_data$Year <- as.factor(final_data_no_2020$Year)
+pca_data$TeamSuccess <- as.factor(final_data_no_2020$Team.Success)
+head(pca_data)
+
+```
+
+```{R}
+# Table Evaluation
+table(Cluster = pca_data$Cluster, TeamSuccess = pca_data$TeamSuccess)
+
+```
