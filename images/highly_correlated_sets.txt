@@ -1,0 +1,105 @@
+Set 1:
+sbm.R/G, ab.rOBA, sbm.RC, sbm.RC/G, sbm.OBP, sbm.OPS, sbm.TotA, sb.R, sb.RBI, sb.TB, sbm.SLG 
+
+Set 2:
+pvb.Rbat, ab.Rbat+, pvb.oWAR, pvb.oRAR, sbm.OPS+, sbm.BtRuns, sbm.BtWins, ab.RE24, sbm.OWn%, pvb.WAR 
+
+Set 3:
+ab.HR%, ab.ISO, sb.HR 
+
+Set 4:
+sb.SO, ab.SO% 
+
+Set 5:
+sb.BB, ab.BB% 
+
+Set 6:
+ap.LD%, ab.LD% 
+
+Set 7:
+ab.GB/FB, ab.GB% 
+
+Set 8:
+ab.RE24, ab.WPA 
+
+Set 9:
+ap.OBP, ap.BA, sp.H, sp.WHIP, sp.H9, ap.OPS, ap.SLG, tf.RA/G, pvp.R, pvp.RA9, sp.ERA, sp.ER 
+
+Set 10:
+tf.DefEff, ap.BAbip 
+
+Set 11:
+sp.HR, ap.HR%, sp.HR9 
+
+Set 12:
+sp.SO, ap.SO%, sp.SO9 
+
+Set 13:
+sp.BB, ap.BB%, sp.BB9 
+
+Set 14:
+ap.GB/FB, ap.GB% 
+
+Set 15:
+ap.RE24, ap.WPA, sp.ERA+ 
+
+Set 16:
+sb.#Bat, tf.#Fld 
+
+Set 17:
+tf.GS, tf.G 
+
+Set 18:
+tf.PO, tf.Inn, pvp.IP 
+
+Set 19:
+tf.A, tf.Ch 
+
+Set 20:
+tf.Fld%, tf.E 
+
+Set 21:
+tf.Rtot/yr, tf.Rtot 
+
+Set 22:
+md.Attend/G, md.Attendance 
+
+Set 23:
+sb.BatAge, md.BatAge 
+
+Set 24:
+md.PPF, md.BPF, pvp.PPFp 
+
+Set 25:
+pvb.Salary, md.Est. Payroll, pvp.Salary 
+
+Set 26:
+sb.PA, pvb.PA 
+
+Set 27:
+pvb.dWAR, pvb.Rfield, pvp.RA9def 
+
+Set 28:
+pvb.Rrep, pvb.Rpos 
+
+Set 29:
+pvb.WAA, pvb.RAA, pvb.RAR, pvb.WAR, pvb.waaWL%, pvb.162WL% 
+
+Set 30:
+pvp.WAA, pvp.RAA, pvp.WAR, pvp.RAR, pvp.waaWL%, pvp.162WL% 
+
+Set 31:
+sbm.lgOBP, sbm.AIR, sbm.lgSLG, sbm.lgOPS, sbm.lgBA 
+
+Set 32:
+sb.H, sbm.BA 
+
+Set 33:
+sb.SB, sbm.PwrSpd 
+
+Set 34:
+sp.L, sp.W, sp.W-L% 
+
+Set 35:
+sp.CG, sp.GF 
+
