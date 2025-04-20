@@ -51,7 +51,7 @@ num_cols <- names(mlb_data)[sapply(mlb_data, is.numeric)]
 mlb_df <- mlb_data %>% dplyr::select(all_of(num_cols))
 
 
-###################### Correlation #############################################
+###################### Remove duplicates #######################################
 
 # Create a list to hold sets of duplicated columns
 duplicate_sets <- list()
@@ -83,7 +83,7 @@ duplicates_to_remove <- unlist(lapply(duplicate_sets, function(group) group[-1])
 # View the result
 duplicates_to_remove
 
-
+################## Find sets of highly correlated variables ####################
 
 # Set threshold
 threshold <- 0.9
@@ -98,7 +98,7 @@ high_corr_pairs <- which(abs(cor_matrix) > threshold & lower.tri(cor_matrix), ar
 high_corr_sets <- list()
 visited <- rep(FALSE, ncol(cor_matrix))
 
-# Lopp through each pair
+# Loop through each pair
 for (i in seq_len(nrow(high_corr_pairs))) {
   # Get cor_matrix index of first variable in the pair
   row <- high_corr_pairs[i, 1]
@@ -137,3 +137,22 @@ for (i in seq_along(high_corr_sets)) {
 }
 sink()
 
+####################### Remove duplicates and highly cor var ###################
+
+# Remove the duplicate columns
+mlb_df <- mlb_df %>% dplyr::select(-all_of(duplicates_to_remove))
+
+# Get list of unique correlated predictors
+high_corr_var <- unique(unlist(high_corr_sets))
+
+# Manually choose predictors to keep from highly correlated sets
+keep_high_corr <- c("ab.rOBA","sbm.OPS+","ab.ISO","ab.SO%","ab.BB%","ab.LD%","ab.GB/FB",
+                    "ab.WPA","sp.WHIP","tf.DefEff","ap.HR%","ap.SO%","ap.BB%","ap.GB/FB",
+                    "ap.RE24","tf.PO","tf.A","tf.Fld%","tf.Rtot/yr","md.Attend/G",
+                    "md.BPF","md.Est. Payroll","pvb.PA","pvb.dWAR","Rrep","pvp.WAR",
+                    "sbm.lgOPS","sbm.BA","sbm.PwrSpd")
+
+# Get correlated variables that will not be kept
+remove_high_corr <- setdiff(high_corr_var, keep_high_corr)
+
+man_corr_df <- mlb_df %>% dplyr::select(-all_of(remove_high_corr))
