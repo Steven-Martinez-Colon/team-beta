@@ -91,28 +91,36 @@ threshold <- 0.9
 cor_matrix <- cor(mlb_df %>% dplyr::select(-duplicates_to_remove),
                   use = "pairwise.complete.obs")
 
-# Find highly correlated pairs
+# Find indices of highly correlated pairs
 high_corr_pairs <- which(abs(cor_matrix) > threshold & lower.tri(cor_matrix), arr.ind = TRUE)
 
 # Build a list of sets
 high_corr_sets <- list()
 visited <- rep(FALSE, ncol(cor_matrix))
 
+# Lopp through each pair
 for (i in seq_len(nrow(high_corr_pairs))) {
+  # Get cor_matrix index of first variable in the pair
   row <- high_corr_pairs[i, 1]
+  # Get cor_matrix index of second variable in the pair
   col <- high_corr_pairs[i, 2]
+  # Get first variable name with colnames of cor_matrix and index in colnames
   var1 <- colnames(cor_matrix)[row]
+  # Get second variable name with colnames of cor_matrix and index in colnames
   var2 <- colnames(cor_matrix)[col]
   
   # Try to find an existing set that contains one of the variables
   found_set <- FALSE
   for (j in seq_along(high_corr_sets)) {
+    # if var1 or var2 already exist in a set, add the other var in the set
     if (var1 %in% high_corr_sets[[j]] || var2 %in% high_corr_sets[[j]]) {
       high_corr_sets[[j]] <- unique(c(high_corr_sets[[j]], var1, var2))
+      # set found_set to TRUE to exit loop for this pair
       found_set <- TRUE
       break
     }
   }
+  # if no set is found, then create a new set with the two variables
   if (!found_set) {
     high_corr_sets[[length(high_corr_sets) + 1]] <- c(var1, var2)
   }
