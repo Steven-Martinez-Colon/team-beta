@@ -273,6 +273,7 @@ mlb_df <- transform_mlb
 
 ############################## LDA Assumptions #################################
 
+
 ## Check multivariate normality assumption
 mvn_result <- mvn(data = mlb_df, mvnTest = "royston", tol = 1e-57)
 mvn_result$multivariateNormality
