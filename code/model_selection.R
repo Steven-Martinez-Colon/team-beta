@@ -199,6 +199,7 @@ ggplot() +
 
 
 
+
 ############################# Random Forest ######################################
 
 # For reproducibility
@@ -214,6 +215,7 @@ rf_pred <- predict(rf_model, newdata = test)
 confusionMatrix(rf_pred, as.factor(test$target))
 
 #########################  ################################################
+
 
 
 
