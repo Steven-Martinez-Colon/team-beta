@@ -1,4 +1,4 @@
-## Written by Joseph Annand
+## Written by Joseph Annand and Steven Martinez
 
 
 library(tidyr)
@@ -273,6 +273,7 @@ mlb_df <- transform_mlb
 
 ############################## LDA Assumptions #################################
 
+
 ## Check multivariate normality assumption
 mvn_result <- mvn(data = mlb_df, mvnTest = "royston", tol = 1e-57)
 mvn_result$multivariateNormality
@@ -282,6 +283,8 @@ mvn_result$multivariateNormality
 
 ## Add Team Success back to data frame
 mlb_df$Team.Success <- mlb_data$Team.Success
+
+write.csv(mlb_df, file = "images/rf_data.csv")
 
 ## Four category response LDA
 lda_model_4 <- lda(Team.Success ~ ., data = mlb_df[,-c(32,33)])
