@@ -427,7 +427,7 @@ ggplot(rf_conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
   theme_minimal(base_size = 14)
 
 
-################################# Random Forest with Predictors - Binary ##############################
+################################# Random Forest with Predictors - 4 classes ##############################
 
 # Loading Dataset
 rf_data <- read.csv("images/rf_data.csv", row.names = 1, check.names = F)
@@ -484,7 +484,10 @@ head(imp_sorted)
 
 ################################# Random Forest with Predictors - Four classes ##############################
 
+# Loading Dataset
+rf_data <- read.csv("images/rf_data.csv", row.names = 1, check.names = F)
 
+rf_data_binary <- rf_data$Team.Success <- ifelse(rf_data$Team.Success == 1,0,1)
 
 
 
