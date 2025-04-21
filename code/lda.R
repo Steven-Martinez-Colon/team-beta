@@ -284,6 +284,8 @@ mvn_result$multivariateNormality
 ## Add Team Success back to data frame
 mlb_df$Team.Success <- mlb_data$Team.Success
 
+write.csv(mlb_df, file = "images/rf_data.csv")
+
 ## Four category response LDA
 lda_model_4 <- lda(Team.Success ~ ., data = mlb_df[,-c(32,33)])
 lda_values_4 <- predict(lda_model_4)$x
