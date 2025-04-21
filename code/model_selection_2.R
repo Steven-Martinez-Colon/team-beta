@@ -427,6 +427,64 @@ ggplot(rf_conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
   theme_minimal(base_size = 14)
 
 
+################################# Random Forest with Predictors - Binary ##############################
+
+# Loading Dataset
+rf_data <- read.csv("images/rf_data.csv", row.names = 1, check.names = F)
+
+# Removing special characters in order to perform Random Forest
+rf_data <- rf_data %>% rename_with(make.names)
+
+# Finding the ideal split ratio
+calcSplitRatio(p = 78, pca_df) # Split data into training (89%) and testing (11%) sets
+
+# For reproducibility
+set.seed(123)
+
+# Stratified split using createDataPartition
+train_index <- createDataPartition(rf_data$`Team.Success`, p = 0.89, list = FALSE)
+train <- rf_data[train_index, ]
+test <- rf_data[-train_index, ]
+
+# Set up predictors and target
+train_x <- train %>% dplyr::select(-Team.Success)
+train_y <- train$`Team.Success`
+test_x <- test %>% dplyr::select(-Team.Success)
+test_y <- test$`Team.Success`
+
+
+# For reproducibility
+set.seed(123)
+
+# Train the model
+rf_model <- randomForest(as.factor(`Team.Success`) ~ ., data = train, ntree = 500, importance = TRUE)
+
+# Predict on test
+rf_pred <- predict(rf_model, newdata = test)
+
+# Evaluating random forest model
+confusionMatrix(rf_pred, as.factor(test$`Team.Success`))
+
+# Exrtract importance
+imp <- importance(rf_model)
+
+# Convert to data frame
+imp_df <- data.frame(Variable = rownames(imp), imp)
+
+# Sort by MeanDecreaseAccuracy
+imp_sorted <- imp_df %>% 
+  arrange(desc(MeanDecreaseAccuracy))
+
+# Selecting only MeanDecreaseAccuracy
+imp_sorted <- imp_sorted %>% 
+  select(MeanDecreaseAccuracy)
+
+# Viewing the top variables
+head(imp_sorted)
+
+################################# Random Forest with Predictors - Four classes ##############################
+
+
 
 
 
