@@ -1,4 +1,4 @@
-## Written by Joseph Annand
+## Written by Joseph Annand and Steven Martinez
 
 
 library(tidyr)
