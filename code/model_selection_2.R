@@ -596,7 +596,7 @@ head(imp_sorted)
 
 
 
-
+########## The code below still needs some work. It is not working properly ###########
 ############################# Using SMOTE on KNN #################################
 
 # Make sure target is a factor
