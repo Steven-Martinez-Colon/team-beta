@@ -23,7 +23,7 @@ load_libraries(c("tidyverse", "lubridate", "stats", "ggplot2", "corrplot", "stri
                  "tidymodels", "modeldata", "themis", "vip", "baguette", "janitor", "rvest",
                  "yardstick", "gsheet", "caret", "randomForest", "here", "tibble", "dplyr", "ISAR",
                  "tidyr", "mgcv", "teamcolors", "baseballr", "Lahman", "remotes", "ggcorrplot", "broom", "readr",
-                 "glmnet", "xgboost", "Matrix", "Metrics", "reshape2"))
+                 "glmnet", "xgboost", "Matrix", "Metrics", "reshape2", "DMwR2"))
 
 # Load only the necessary functions from 'car'
 library(car, exclude = "select")
@@ -91,18 +91,46 @@ pca_df <- as.data.frame(pca_result$x[, 1:20])
 # Add the target variable
 pca_df$target <- df_no_2020$Team.Success
 
-# Split data into training (80%) and testing (20%) sets
-set.seed(123)  # For reproducibility
-train_indices <- sample(1:nrow(pca_df), 0.8 * nrow(pca_df))
-train <- pca_df[train_indices, ]
-test <- pca_df[-train_indices, ]
+# Function to find the ideal split ratio
+calcSplitRatio <- function(p = NA, df) {
+  ## @p  = the number of parameters. by default, if none are provided, the number of columns (predictors) in the dataset are used
+  ## @df = the dataframe that will be used for the analysis
+  
+  ## If the number of parameters isn't supplied, set it to the number of features minus 1 for the target
+  if(is.na(p)) {
+    p <- ncol(df) -1   ## COMMENT HERE
+  }
+  
+  ## Calculate the ideal number of testing set
+  test_N <- (1/sqrt(p))*nrow(df)
+  ## Turn that into a testing proportion
+  test_prop <- round((1/sqrt(p))*nrow(df)/nrow(df), 2)
+  ## And find the training proportion
+  train_prop <- 1-test_prop
+  
+  ## Tell us the results!
+  print(paste0("The ideal split ratio is ", train_prop, ":", test_prop, " training:testing"))
+  
+  ## Return the size of the training set
+  return(train_prop)
+}
 
+# Finding the ideal split ratio
+calcSplitRatio(p = 21, pca_df) # Split data into training (78%) and testing (22%) sets
+
+set.seed(123)  # For reproducibility
+
+# Stratified split using createDataPartition
+train_index <- createDataPartition(pca_df$target, p = 0.78, list = FALSE)
+train <- pca_df[train_index, ]
+test <- pca_df[-train_index, ]
 
 # Set up predictors and target
 train_x <- train[, 1:20]
 train_y <- train$target
 test_x <- test[, 1:20]
 test_y <- test$target
+
 
 # Looking for the best k value
 accuracy_scores <- c() # setting up a variable to store the accuracy scores
@@ -128,18 +156,18 @@ plot(1:20, accuracy_scores, type = "b", pch = 19,
 abline(v = best_k, col = "red", lty = 2)
 
 
-# Running a knn model using k=11
-predicted <- knn(train = train_x, test = test_x, cl = train_y, k = 11)
+# Running a knn model using k=9
+knn_predicted <- knn(train = train_x, test = test_x, cl = train_y, k = 9)
 
 # Evaluate accuracy
-accuracy <- mean(predicted == test_y)
+accuracy <- mean(knn_predicted == test_y)
 print(accuracy)
 
 # Looking at Confusion matrix
-table(Predicted = predicted, Actual = test_y)
+confusionMatrix(knn_predicted, as.factor(test$target))
 
 # Creating a heatmap table for the confusion matrix
-conf_matrix <- table(Predicted = predicted, Actual = test_y) # Create the table as a matrix
+conf_matrix <- table(Predicted = knn_predicted, Actual = test_y) # Create the table as a matrix
 conf_df <- as.data.frame(conf_matrix) # Convert to data frame for ggplot
 
 # Plot heatmap
@@ -170,24 +198,22 @@ ggplot() +
   theme_minimal()
 
 
-############################# Joey's Code ######################################
-### comment
-head(df) # testing
-### github test
-# Looking at Confusion matrix
-table(Predicted = predicted, Actual = test_y)
 
-# James Keegan
+############################# Random Forest ######################################
 
+# For reproducibility
+set.seed(123)
 
-# JK
+# Train the model
+rf_model <- randomForest(as.factor(target) ~ ., data = train, ntree = 500)
 
-#sdfjhk
+# Predict on test
+rf_pred <- predict(rf_model, newdata = test)
 
+# Evaluating random forest model
+confusionMatrix(rf_pred, as.factor(test$target))
 
-
-
-
+#########################  ################################################
 
 
 
@@ -220,4 +246,74 @@ table(Predicted = predicted, Actual = test_y)
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############################# Using SMOTE on KNN #################################
+
+# Make sure target is a factor
+train$target <- as.factor(train$target)
+
+# Apply SMOTE using performanceEstimation::smote
+set.seed(123)
+train_smote <- smote(target ~ ., data = train, perc.over = 600, perc.under = 100)
+
+# Check class distribution after SMOTE
+table(train_smote$target)
+
+# Extract predictors and target from SMOTE dataset
+train_x_smote <- train_smote[, 1:20]
+train_y_smote <- train_smote$target
+
+# Original test set
+test_x <- test[, 1:20]
+test_y <- test$target
+
+# Looking for the best k value
+accuracy_scores <- c() # setting up a variable to store the accuracy scores
+
+# Loop to check which k value has the best accuracy
+for (k in 1:20) {
+  predicted_k <- knn(train = train_x, test = test_x, cl = train_y, k = k)
+  acc <- mean(predicted_k == test_y)
+  accuracy_scores <- c(accuracy_scores, acc)
+}
+
+# Looking at all the accuracy scores for the k values
+print(accuracy_scores)
+
+# Best k
+best_k <- which.max(accuracy_scores)
+best_acc <- max(accuracy_scores)
+cat("Best k:", best_k, "\nBest Accuracy:", round(best_acc, 4))
+
+# Plot accuracy vs k (run plot and abline together)
+plot(1:20, accuracy_scores, type = "b", pch = 19,
+     xlab = "k", ylab = "Accuracy", main = "KNN Accuracy by k")
+abline(v = best_k, col = "red", lty = 2)
+
+
+# Running a knn model using k=8
+predicted_smote <- knn(train = train_x_smote, test = test_x, cl = train_y_smote, k = 9)
+
+# Accuracy
+accuracy_smote <- mean(predicted_smote == test_y)
+cat("Accuracy after SMOTE:", round(accuracy_smote, 4), "\n")
+
+# Confusion Matrix
+conf_matrix_smote <- confusionMatrix(as.factor(predicted_smote), as.factor(test_y))
+print(conf_matrix_smote)
 
