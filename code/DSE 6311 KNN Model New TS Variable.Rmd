@@ -1,0 +1,154 @@
+---
+title: "DSE 6311 KNN Model New TS Variable"
+author: "James Keegan"
+date: "2025-04-17"
+output: html_document
+---
+
+# Loading Library Functions (from Steven Martinez)
+
+```{R}
+# Loading Libraries Function
+load_libraries <- function(packages) {
+  # Check for missing packages
+  missing_packages <- packages[!(packages %in% installed.packages()[, "Package"])]
+  
+  # install missing packages
+  if(length(missing_packages) > 0) {
+    install.packages(missing_packages)
+  }
+  
+  # Load all packages
+  lapply(packages, library, character.only = TRUE)
+  
+  cat("All packages are loaded succesfully.\n")
+}
+
+```
+
+```{R}
+# Loading necessary libraries 
+load_libraries(c("tidyverse", "lubridate", "stats", "ggplot2", "corrplot", "stringr", "stringi","tidymodels", "modeldata", "themis", "vip", "baguette", "janitor", "rvest",
+"yardstick", "gsheet", "caret", "randomForest", "here", "tibble", "dplyr", "ISAR", "tidyr", "mgcv","teamcolors", "baseballr", "Lahman", "remotes", "ggcorrplot", "broom", "readr", "glmnet", "xgboost", "Matrix", "Metrics"))
+
+# Load only the necessary functions from 'car'
+library(car, exclude = "select")
+
+# Turning off warning messages
+options(warnings = 0)
+
+```
+
+# PCA
+
+```{R}
+# Loading datasets
+final_data <- read_csv("C:\\Users\\student\\Documents\\DSE 6311\\Module 4\\final_dataset.csv")
+new_success_variable = read.csv("C:\\Users\\student\\Documents\\DSE 6311\\Module 5\\Team Success Variable Data Playoffs or No Playoffs - Sheet1.csv")
+
+# Removing Team Success Variable from the final data
+final_data = final_data %>%
+  select(-Team.Success)
+
+# Joining the two new success variable to final data
+final_data = final_data %>%
+  left_join(new_success_variable, by = c("Tm", "Year"))
+
+# Removing the year 2020 
+final_data_no_2020 <- final_data %>% 
+  filter(Year != 2020)
+head(final_data_no_2020)
+
+```
+
+```{R}
+# Selecting Only Numeric Columns
+final_data_numeric <- final_data_no_2020 %>%
+  select(where(is.numeric)) %>%
+  select(where(~ !any(is.na(.))))
+
+# Scaling the data
+final_data_scaled <- scale(final_data_numeric)
+
+# Running the PCA
+pca_no_2020 <- prcomp(final_data_scaled, center = TRUE, scale. = TRUE)
+
+# Using the first three PCs for the KNN Model
+pca_data <- as.data.frame(pca_no_2020$x[, 1:20])
+head(pca_data)
+
+```
+
+```{R}
+# Adding variables to PCA data 
+pca_data$Year <- as.numeric(final_data_no_2020$Year)
+pca_data$TeamSuccess <- as.factor(final_data_no_2020$Team.Success)
+print(pca_data)
+
+```
+
+# PCA KNN Model
+
+```{R}
+# Splitting data into train and test data
+set.seed(123) 
+train_index <- createDataPartition(pca_data$TeamSuccess, p = 0.8, list = FALSE)
+
+train_data <- pca_data[train_index, ]
+test_data <- pca_data[-train_index, ]
+
+```
+
+```{R}
+# Running KNN Model
+library(class)
+knn_model <- knn(train = train_data, test = test_data, cl = train_data$TeamSuccess, k = 2)
+
+```
+
+```{R}
+# Check accuracy
+confusionMatrix(knn_model, test_data$TeamSuccess)
+
+```
+
+# K-means Clustering KNN Model
+
+```{R}
+# Removing Variables for K-means
+k_means_data = pca_data %>%
+  select(-Year, -TeamSuccess)
+
+# Performing k-means
+set.seed(71)
+kmeans_no_2020 <- kmeans(k_means_data, centers = 2, nstart = 25)
+
+# Adding clusters to the k-means data
+k_means_data$Cluster <- as.numeric(kmeans_no_2020$cluster)
+k_means_data$Year <- as.numeric(pca_data$Year)
+k_means_data$TeamSuccess <- as.factor(pca_data$TeamSuccess)
+head(k_means_data)
+
+```
+
+```{R}
+# Splitting data into train and test data
+set.seed(123) 
+train_index_k <- createDataPartition(k_means_data$TeamSuccess, p = 0.8, list = FALSE)
+
+train_data_k <- k_means_data[train_index_k, ]
+test_data_k <- k_means_data[-train_index_k, ]
+
+```
+
+```{R}
+# Running KNN model
+knn_model_k <- knn(train = train_data_k, test = test_data_k, cl = train_data_k$TeamSuccess, k = 2)
+
+```
+
+```{R}
+# Check accuracy
+confusionMatrix(knn_model_k, test_data_k$TeamSuccess)
+
+```
