@@ -228,6 +228,10 @@ df_playoffs_only <- left_join(df, binary_df,
 # Removing the previous Team Success Columns
 df_playoffs_only <- df_playoffs_only %>% select(-`Team.Success`)
 
+df$Team.Success <- ifelse(df$Team.Success == 1,0,1)
+
+df_playoffs_only <- df
+
 ############################ PCA - Binary Playoffs ###################################
 
 # removing the year 2020 in order to perform PCA again without it
@@ -273,7 +277,7 @@ head(sort(abs(loadings[,4]), decreasing = TRUE), 10)
 pca_df <- as.data.frame(pca_result$x[, 1:20])
 
 # Add the target variable
-pca_df$target <- df_playoffs_only$`Team Success`
+pca_df$target <- df_playoffs_only$`Team.Success`
 
 # Function to find the ideal split ratio
 calcSplitRatio <- function(p = NA, df) {
