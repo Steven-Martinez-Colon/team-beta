@@ -176,6 +176,7 @@ ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
   geom_text(aes(label = Freq), size = 5, fontface = "bold") +
   scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
   labs(title = "Distribution of Team Success Across Clusters",
+       subtitle = "KNN Model",
        x = "Team Success",
        y = "Predicted",
        fill = "Count") +
@@ -189,11 +190,7 @@ pca_plot_df <- data.frame(PC1 = pca_result$x[,1],
 
 ggplot() +
   geom_point(data = pca_plot_df, aes(x = PC1, y = PC2, color = TeamSuccess), alpha = 0.6) +
-  geom_point(data = subset(pca_plot_df, TeamSuccess == 4),
-             aes(x = PC1, y = PC2),
-             color = "black", size = 2, shape = 21, stroke = 1) +
   labs(title = "PC1 vs PC2 Colored by Team Success",
-       subtitle = "World Series Winners Highlighted",
        x = "PC1", y = "PC2") +
   theme_minimal()
 
@@ -213,6 +210,22 @@ rf_pred <- predict(rf_model, newdata = test)
 
 # Evaluating random forest model
 confusionMatrix(rf_pred, as.factor(test$target))
+
+# Creating a heatmap table for the confusion matrix
+rf_conf_matrix <- table(Predicted = rf_pred, Actual = test_y) # Create the table as a matrix
+rf_conf_df <- as.data.frame(rf_conf_matrix) # Convert to data frame for ggplot
+
+# Plot heatmap
+ggplot(rf_conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 5, fontface = "bold") +
+  scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
+  labs(title = "Distribution of Team Success Across Predictions",
+       subtitle = "Random Forest",
+       x = "Team Success",
+       y = "Predicted",
+       fill = "Count") +
+  theme_minimal(base_size = 14)
 
 
 
@@ -363,7 +376,8 @@ ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
   geom_tile(color = "white") +
   geom_text(aes(label = Freq), size = 5, fontface = "bold") +
   scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
-  labs(title = "Distribution of Team Success Across Clusters",
+  labs(title = "Distribution of Team Success Across Predictions",
+       subtitle = "KNN Model",
        x = "Team Success",
        y = "Predicted",
        fill = "Count") +
@@ -373,7 +387,7 @@ ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
 # Visualizing PC1 vs PC2 colored by Team Success
 pca_plot_df <- data.frame(PC1 = pca_result$x[,1],
                           PC2 = pca_result$x[,2],
-                          TeamSuccess = as.factor(df_playoffs_only$`Team Success`))
+                          TeamSuccess = as.factor(df_playoffs_only$`Team.Success`))
 
 ggplot() +
   geom_point(data = pca_plot_df, aes(x = PC1, y = PC2, color = TeamSuccess), alpha = 0.6) +
@@ -396,8 +410,21 @@ rf_pred <- predict(rf_model, newdata = test)
 # Evaluating random forest model
 confusionMatrix(rf_pred, as.factor(test$target))
 
+# Creating a heatmap table for the confusion matrix
+rf_conf_matrix <- table(Predicted = rf_pred, Actual = test_y) # Create the table as a matrix
+rf_conf_df <- as.data.frame(rf_conf_matrix) # Convert to data frame for ggplot
 
-
+# Plot heatmap
+ggplot(rf_conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 5, fontface = "bold") +
+  scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
+  labs(title = "Distribution of Team Success Across Predictions",
+       subtitle = "Random Forest",
+       x = "Team Success",
+       y = "Predicted",
+       fill = "Count") +
+  theme_minimal(base_size = 14)
 
 
 
