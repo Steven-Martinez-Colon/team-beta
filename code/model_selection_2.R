@@ -231,18 +231,10 @@ ggplot(rf_conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
 
 ######################### Binary Playoffs ################################################
 
-# Loading dataset
-binary_df <- read_csv("datasets/Team Success Variable Data Playoffs or No Playoffs - Sheet1.csv")
-
-# Joining datasets
-df_playoffs_only <- left_join(df, binary_df,
-                              by = c("Tm", "Year"))
-
-# Removing the previous Team Success Columns
-df_playoffs_only <- df_playoffs_only %>% select(-`Team.Success`)
-
+# Changing Team Success to be Binary
 df$Team.Success <- ifelse(df$Team.Success == 1,0,1)
 
+# Playoffs vs non-playoffs df
 df_playoffs_only <- df
 
 ############################ PCA - Binary Playoffs ###################################
@@ -482,7 +474,7 @@ ggplot(rf_conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
   theme_minimal(base_size = 14)
 
 
-# Exrtract importance
+# Extract importance
 imp <- importance(rf_model)
 
 # Convert to data frame
