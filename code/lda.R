@@ -1,4 +1,4 @@
-## Written by Joseph Annand
+## Written by Joseph Annand and Steven Martinez
 
 
 library(tidyr)
@@ -18,6 +18,7 @@ library(MASS)
 source("code/calcSplitRatio-3.R")
 library(MVN)
 library(class)
+library(randomForest)
 
 dataset_folder <- paste(getwd(),"/final_data",sep="")
 
@@ -148,13 +149,13 @@ findCorrelatedSets <- function(df, threshold=0.9) {
 
 
 
-# Export high_corr_sets to text file
-sink("images/highly_correlated_sets.txt")
-for (i in seq_along(findCorrelatedSets(mlb_df))) {
-  cat(paste0("Set ", i, ":\n"))
-  cat(paste(high_corr_sets[[i]], collapse = ", "), "\n\n")
-}
-sink()
+# # Export high_corr_sets to text file
+# sink("images/highly_correlated_sets.txt")
+# for (i in seq_along(findCorrelatedSets(mlb_df))) {
+#   cat(paste0("Set ", i, ":\n"))
+#   cat(paste(high_corr_sets[[i]], collapse = ", "), "\n\n")
+# }
+# sink()
 
 ####################### Remove duplicates and highly cor var ###################
 
@@ -273,6 +274,7 @@ mlb_df <- transform_mlb
 
 ############################## LDA Assumptions #################################
 
+
 ## Check multivariate normality assumption
 mvn_result <- mvn(data = mlb_df, mvnTest = "royston", tol = 1e-57)
 mvn_result$multivariateNormality
@@ -282,6 +284,8 @@ mvn_result$multivariateNormality
 
 ## Add Team Success back to data frame
 mlb_df$Team.Success <- mlb_data$Team.Success
+
+write.csv(mlb_df, file = "images/rf_data.csv")
 
 ## Four category response LDA
 lda_model_4 <- lda(Team.Success ~ ., data = mlb_df[,-c(32,33)])
@@ -451,3 +455,27 @@ ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
        y = "Predicted",
        fill = "Count") +
   theme_minimal(base_size = 14)
+
+
+################################# Random Forest ################################
+
+rf_data <- read.csv("images/rf_data.csv", row.names = 1)
+
+set.seed(101)
+
+# Create stratified train-test split (80% training, 20% test)
+train_index <- createDataPartition(rf_data$Team.Success, p = 0.8, list = FALSE)
+
+# Split the data into training and test sets
+train_data <- rf_data[train_index, ]
+test_data <- rf_data[-train_index, ]
+
+# Define the predictor variables (excluding the response variable)
+train_x <- train_data %>% dplyr::select(-Team.Success)
+train_y <- train_data$Team.Success
+
+# Define the predictor variables for the test set
+test_x <- test_data %>% dplyr::select(-Team.Success)
+test_y <- test_data$Team.Success
+
+rf_model <- randomForest(Team.Success ~ ., data = train_data, ntree = 500)

@@ -176,6 +176,7 @@ ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
   geom_text(aes(label = Freq), size = 5, fontface = "bold") +
   scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
   labs(title = "Distribution of Team Success Across Clusters",
+       subtitle = "KNN Model",
        x = "Team Success",
        y = "Predicted",
        fill = "Count") +
@@ -189,11 +190,7 @@ pca_plot_df <- data.frame(PC1 = pca_result$x[,1],
 
 ggplot() +
   geom_point(data = pca_plot_df, aes(x = PC1, y = PC2, color = TeamSuccess), alpha = 0.6) +
-  geom_point(data = subset(pca_plot_df, TeamSuccess == 4),
-             aes(x = PC1, y = PC2),
-             color = "black", size = 2, shape = 21, stroke = 1) +
   labs(title = "PC1 vs PC2 Colored by Team Success",
-       subtitle = "World Series Winners Highlighted",
        x = "PC1", y = "PC2") +
   theme_minimal()
 
@@ -214,19 +211,31 @@ rf_pred <- predict(rf_model, newdata = test)
 # Evaluating random forest model
 confusionMatrix(rf_pred, as.factor(test$target))
 
+# Creating a heatmap table for the confusion matrix
+rf_conf_matrix <- table(Predicted = rf_pred, Actual = test_y) # Create the table as a matrix
+rf_conf_df <- as.data.frame(rf_conf_matrix) # Convert to data frame for ggplot
+
+# Plot heatmap
+ggplot(rf_conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 5, fontface = "bold") +
+  scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
+  labs(title = "Distribution of Team Success Across Predictions",
+       subtitle = "Random Forest",
+       x = "Team Success",
+       y = "Predicted",
+       fill = "Count") +
+  theme_minimal(base_size = 14)
+
 
 
 ######################### Binary Playoffs ################################################
 
-# Loading dataset
-binary_df <- read_csv("datasets/Team Success Variable Data Playoffs or No Playoffs - Sheet1.csv")
+# Changing Team Success to be Binary
+df$Team.Success <- ifelse(df$Team.Success == 1,0,1)
 
-# Joining datasets
-df_playoffs_only <- left_join(df, binary_df,
-                              by = c("Tm", "Year"))
-
-# Removing the previous Team Success Columns
-df_playoffs_only <- df_playoffs_only %>% select(-`Team.Success`)
+# Playoffs vs non-playoffs df
+df_playoffs_only <- df
 
 ############################ PCA - Binary Playoffs ###################################
 
@@ -273,7 +282,7 @@ head(sort(abs(loadings[,4]), decreasing = TRUE), 10)
 pca_df <- as.data.frame(pca_result$x[, 1:20])
 
 # Add the target variable
-pca_df$target <- df_playoffs_only$`Team Success`
+pca_df$target <- df_playoffs_only$`Team.Success`
 
 # Function to find the ideal split ratio
 calcSplitRatio <- function(p = NA, df) {
@@ -359,7 +368,8 @@ ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
   geom_tile(color = "white") +
   geom_text(aes(label = Freq), size = 5, fontface = "bold") +
   scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
-  labs(title = "Distribution of Team Success Across Clusters",
+  labs(title = "Distribution of Team Success Across Predictions",
+       subtitle = "KNN Model",
        x = "Team Success",
        y = "Predicted",
        fill = "Count") +
@@ -369,7 +379,7 @@ ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
 # Visualizing PC1 vs PC2 colored by Team Success
 pca_plot_df <- data.frame(PC1 = pca_result$x[,1],
                           PC2 = pca_result$x[,2],
-                          TeamSuccess = as.factor(df_playoffs_only$`Team Success`))
+                          TeamSuccess = as.factor(df_playoffs_only$`Team.Success`))
 
 ggplot() +
   geom_point(data = pca_plot_df, aes(x = PC1, y = PC2, color = TeamSuccess), alpha = 0.6) +
@@ -392,6 +402,168 @@ rf_pred <- predict(rf_model, newdata = test)
 # Evaluating random forest model
 confusionMatrix(rf_pred, as.factor(test$target))
 
+# Creating a heatmap table for the confusion matrix
+rf_conf_matrix <- table(Predicted = rf_pred, Actual = test_y) # Create the table as a matrix
+rf_conf_df <- as.data.frame(rf_conf_matrix) # Convert to data frame for ggplot
+
+# Plot heatmap
+ggplot(rf_conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 5, fontface = "bold") +
+  scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
+  labs(title = "Distribution of Team Success Across Predictions",
+       subtitle = "Random Forest",
+       x = "Team Success",
+       y = "Predicted",
+       fill = "Count") +
+  theme_minimal(base_size = 14)
+
+
+################################# Random Forest with Predictors - 4 classes ##############################
+
+# Loading Dataset
+rf_data <- read.csv("images/rf_data.csv", row.names = 1, check.names = F)
+
+# Removing special characters in order to perform Random Forest
+rf_data <- rf_data %>% rename_with(make.names)
+
+# Finding the ideal split ratio
+calcSplitRatio(p = 78, pca_df) # Split data into training (89%) and testing (11%) sets
+
+# For reproducibility
+set.seed(123)
+
+# Stratified split using createDataPartition
+train_index <- createDataPartition(rf_data$`Team.Success`, p = 0.89, list = FALSE)
+train <- rf_data[train_index, ]
+test <- rf_data[-train_index, ]
+
+# Set up predictors and target
+train_x <- train %>% dplyr::select(-Team.Success)
+train_y <- train$`Team.Success`
+test_x <- test %>% dplyr::select(-Team.Success)
+test_y <- test$`Team.Success`
+
+
+# For reproducibility
+set.seed(123)
+
+# Train the model
+rf_model <- randomForest(as.factor(`Team.Success`) ~ ., data = train, ntree = 500, importance = TRUE)
+
+# Predict on test
+rf_pred <- predict(rf_model, newdata = test)
+
+# Evaluating random forest model
+confusionMatrix(rf_pred, as.factor(test$`Team.Success`))
+
+# Creating a heatmap table for the confusion matrix
+rf_conf_matrix <- table(Predicted = rf_pred, Actual = test_y) # Create the table as a matrix
+rf_conf_df <- as.data.frame(rf_conf_matrix) # Convert to data frame for ggplot
+
+# Plot heatmap
+ggplot(rf_conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 5, fontface = "bold") +
+  scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
+  labs(title = "Distribution of Team Success Across Predictions",
+       subtitle = "Random Forest",
+       x = "Team Success",
+       y = "Predicted",
+       fill = "Count") +
+  theme_minimal(base_size = 14)
+
+
+# Extract importance
+imp <- importance(rf_model)
+
+# Convert to data frame
+imp_df <- data.frame(Variable = rownames(imp), imp)
+
+# Sort by MeanDecreaseAccuracy
+imp_sorted <- imp_df %>% 
+  arrange(desc(MeanDecreaseAccuracy))
+
+# Selecting only MeanDecreaseAccuracy
+imp_sorted <- imp_sorted %>% 
+  select(MeanDecreaseAccuracy)
+
+# Viewing the top variables
+head(imp_sorted)
+
+################################# Random Forest with Predictors - Two classes ##############################
+
+# Loading Dataset
+rf_data <- read.csv("images/rf_data.csv", row.names = 1, check.names = F)
+
+rf_data_binary <- rf_data$Team.Success <- ifelse(rf_data$Team.Success == 1,0,1)
+
+# Removing special characters in order to perform Random Forest
+rf_data <- rf_data %>% rename_with(make.names)
+
+# Finding the ideal split ratio
+calcSplitRatio(p = 78, pca_df) # Split data into training (89%) and testing (11%) sets
+
+# For reproducibility
+set.seed(123)
+
+# Stratified split using createDataPartition
+train_index <- createDataPartition(rf_data$`Team.Success`, p = 0.89, list = FALSE)
+train <- rf_data[train_index, ]
+test <- rf_data[-train_index, ]
+
+# Set up predictors and target
+train_x <- train %>% dplyr::select(-Team.Success)
+train_y <- train$`Team.Success`
+test_x <- test %>% dplyr::select(-Team.Success)
+test_y <- test$`Team.Success`
+
+
+# For reproducibility
+set.seed(123)
+
+# Train the model
+rf_model <- randomForest(as.factor(`Team.Success`) ~ ., data = train, ntree = 500, importance = TRUE)
+
+# Predict on test
+rf_pred <- predict(rf_model, newdata = test)
+
+# Evaluating random forest model
+confusionMatrix(rf_pred, as.factor(test$`Team.Success`))
+
+# Creating a heatmap table for the confusion matrix
+rf_conf_matrix <- table(Predicted = rf_pred, Actual = test_y) # Create the table as a matrix
+rf_conf_df <- as.data.frame(rf_conf_matrix) # Convert to data frame for ggplot
+
+# Plot heatmap
+ggplot(rf_conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 5, fontface = "bold") +
+  scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
+  labs(title = "Distribution of Team Success Across Predictions",
+       subtitle = "Random Forest",
+       x = "Team Success",
+       y = "Predicted",
+       fill = "Count") +
+  theme_minimal(base_size = 14)
+
+
+# Exrtract importance
+imp <- importance(rf_model)
+
+# Convert to data frame
+imp_df <- data.frame(Variable = rownames(imp), imp)
+
+# Sort by MeanDecreaseAccuracy
+imp_sorted <- imp_df %>% 
+  arrange(desc(MeanDecreaseAccuracy))
+
+# Selecting only MeanDecreaseAccuracy
+imp_sorted <- imp_sorted %>% 
+  select(MeanDecreaseAccuracy)
+
+# Viewing the top variables
+head(imp_sorted)
 
 
 
@@ -416,13 +588,7 @@ confusionMatrix(rf_pred, as.factor(test$target))
 
 
 
-
-
-
-
-
-
-
+########## The code below still needs some work. It is not working properly ###########
 ############################# Using SMOTE on KNN #################################
 
 # Make sure target is a factor
