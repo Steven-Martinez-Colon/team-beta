@@ -40,7 +40,7 @@ options(warnings = 0)
 
 ```{R}
 # Loading dataset
-df <- read_csv("C:\\Users\\student\\Documents\\DSE 6311\\Module 6\\balanced_data.csv")
+df <- read_csv("C:\\Users\\student\\Documents\\GitHub\\team-beta\\final_data\\balanced_rf_data.csv")
 head(df)
 
 ```
