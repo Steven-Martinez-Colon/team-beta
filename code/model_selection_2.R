@@ -548,7 +548,7 @@ ggplot(rf_conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
   theme_minimal(base_size = 14)
 
 
-# Exrtract importance
+# Extract importance
 imp <- importance(rf_model)
 
 # Convert to data frame
