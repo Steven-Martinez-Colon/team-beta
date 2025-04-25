@@ -1,0 +1,185 @@
+---
+title: "DSE 6311 Hyperparameter Tuning & Model Evaluation"
+author: "James Keegan"
+date: "2025-04-24"
+output: html_document
+---
+
+# Code Copied from Steven Martinez
+
+############## Loading Libraries Function ####################
+
+```{R}
+load_libraries <- function(packages) {
+  # Check for missing packages
+  missing_packages <- packages[!(packages %in% installed.packages()[, "Package"])]
+  
+  # install missing packages
+  if(length(missing_packages) > 0) {
+    install.packages(missing_packages)
+  }
+  
+  # Load all packages
+  lapply(packages, library, character.only = TRUE)
+  
+  cat("All packages are loaded succesfully.\n")
+}
+
+# Loading necessary libraries
+load_libraries(c("tidyverse", "lubridate", "stats", "ggplot2", "corrplot", "stringr", "stringi", "class", "tidymodels", "modeldata", "themis", "vip", "baguette", "janitor", "rvest", "yardstick", "gsheet", "caret", "randomForest", "here", "tibble", "dplyr", "ISAR", "tidyr", "mgcv", "teamcolors", "baseballr", "Lahman", "remotes", "ggcorrplot", "broom", "readr", "glmnet", "xgboost", "Matrix", "Metrics", "reshape2", "DMwR2"))
+
+# Load only the necessary functions from 'car'
+library(car, exclude = "select")
+
+# Turning off warning messages
+options(warnings = 0)
+
+```
+
+############################## Loading Dataset ####################################
+
+```{R}
+# Loading dataset
+df <- read_csv("C:\\Users\\student\\Documents\\DSE 6311\\Module 6\\balanced_data.csv")
+head(df)
+
+```
+
+```{R}
+# Stratified split using createDataPartition
+train_index <- createDataPartition(df$TeamSuccess, p = 0.78, list = FALSE)
+train <- df[train_index, ]
+test <- df[-train_index, ]
+
+# Set up predictors and target
+train_x <- train[, 1:20]
+train_y <- train$TeamSuccess
+test_x <- test[, 1:20]
+test_y <- test$TeamSuccess
+
+```
+
+```{R}
+# Looking for the best k value
+accuracy_scores <- c() # setting up a variable to store the accuracy scores
+
+# Loop to check which k value has the best accuracy
+for (k in 1:20) {
+  predicted_k <- knn(train = train_x, test = test_x, cl = train_y, k = k)
+  acc <- mean(predicted_k == test_y)
+  accuracy_scores <- c(accuracy_scores, acc)
+}
+
+# Looking at all the accuracy scores for the k values
+print(accuracy_scores)
+
+```
+
+```{R}
+# Best k
+best_k <- which.max(accuracy_scores)
+best_acc <- max(accuracy_scores)
+cat("Best k:", best_k, "\nBest Accuracy:", round(best_acc, 4))
+
+# Plot accuracy vs k (run plot and abline together)
+plot(1:20, accuracy_scores, type = "b", pch = 19,
+     xlab = "k", ylab = "Accuracy", main = "KNN Accuracy by k")
+abline(v = best_k, col = "red", lty = 2)
+
+```
+
+```{R}
+# Running a knn model using k=9
+knn_predicted <- knn(train = train_x, test = test_x, cl = train_y, k = 1)
+
+# Evaluate accuracy
+accuracy <- mean(knn_predicted == test_y)
+print(accuracy)
+
+```
+
+```{R}
+# Looking at Confusion matrix
+confusionMatrix(knn_predicted, as.factor(test$TeamSuccess))
+
+# Creating a heatmap table for the confusion matrix
+conf_matrix <- table(Predicted = knn_predicted, Actual = test_y) # Create the table as a matrix
+conf_df <- as.data.frame(conf_matrix) # Convert to data frame for ggplot
+
+```
+
+```{R}
+# Plot heatmap
+ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 5, fontface = "bold") +
+  scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
+  labs(title = "Distribution of Team Success Across Clusters",
+       subtitle = "KNN Model",
+       x = "Team Success",
+       y = "Predicted",
+       fill = "Count") +
+  theme_minimal(base_size = 14)
+
+```
+
+############################# Random Forest ######################################
+
+```{R}
+# For reproducibility
+set.seed(123)
+
+# Train the model
+rf_model <- randomForest(as.factor(TeamSuccess) ~ ., data = train, ntree = 500)
+
+# Predict on test
+rf_pred <- predict(rf_model, newdata = test)
+
+# Evaluating random forest model
+confusionMatrix(rf_pred, as.factor(test$TeamSuccess))
+
+# Creating a heatmap table for the confusion matrix
+rf_conf_matrix <- table(Predicted = rf_pred, Actual = test_y) # Create the table as a matrix
+rf_conf_df <- as.data.frame(rf_conf_matrix) # Convert to data frame for ggplot
+
+```
+
+```{R}
+# Plot heatmap
+ggplot(rf_conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 5, fontface = "bold") +
+  scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
+  labs(title = "Distribution of Team Success Across Predictions",
+       subtitle = "Random Forest",
+       x = "Team Success",
+       y = "Predicted",
+       fill = "Count") +
+  theme_minimal(base_size = 14)
+
+```
+
+```{R}
+
+
+```
+
+```{R}
+
+
+```
+
+```{R}
+
+
+```
+
+```{R}
+
+
+```
+
+```{R}
+
+
+```
