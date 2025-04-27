@@ -10,6 +10,8 @@ library(purrr)
 library(readr)
 library(corrplot)
 library(ggcorrplot)
+library(themis)
+library(recipes)
 library(caret)
 library(moments)
 library(FactoMineR)
@@ -19,6 +21,7 @@ source("code/calcSplitRatio-3.R")
 library(MVN)
 library(class)
 library(randomForest)
+
 
 dataset_folder <- paste(getwd(),"/final_data",sep="")
 
@@ -176,58 +179,6 @@ remove_high_corr <- setdiff(high_corr_var, keep_high_corr)
 mlb_rhc_df <- mlb_df %>% dplyr::select(-all_of(remove_high_corr))
 
 
-###################### Transformations Function ################################
-
-
-performBoxCox <- function(df) {
-  ## Find all non-normally distributed variables and apply Box Cox transformations
-  ## @df = dataframe with predictors to apply transformations
-  ## returns dataframe with transformed predictors
-  
-  shapiro_pvalues <- sapply(df, function (col) {
-                              shapiro.test(col)$p.value
-                            })
-  
-  shapiro_results <- data.frame(
-    Variable = names(shapiro_pvalues),
-    P_Value = shapiro_pvalues
-  )
-  
-  ## Get non-normal columns with Shapiro-Wilks p-value < 0.05
-  non_normal_cols <- names(shapiro_pvalues[shapiro_pvalues < 0.05])
-  
-  ## Apply Box-Cox transformation to non-normal cols
-  for (colname in non_normal_cols) {
-    col <- df[[colname]]
-    
-    # Shift if necessary (Box-Cox requires > 0)
-    if (any(col <= 0, na.rm = TRUE)) {
-      min_val <- min(col, na.rm = TRUE)
-      col <- col + abs(min_val) + 1
-    }
-    
-    # Create temporary df for lm fitting
-    df_temp <- data.frame(y = col)
-    
-    # Fit linear model (Box-Cox requires a model)
-    # Using dummy response variable
-    lm_model <- lm(y ~ 1, data = df_temp)
-
-    # Apply Box-Cox transformation
-    bc <- boxcox(lm_model, lambda = seq(-5, 5, 0.1), plotit = FALSE)
-    lambda_opt <- bc$x[which.max(bc$y)]
-    transformed_col <- if (lambda_opt == 0) log(col) else (col^lambda_opt - 1) / lambda_opt
-
-    # Replace original column with transformed values
-    df[[colname]] <- transformed_col
-  }
-  
-  return(df_temp)
-  
-}
-
-# mlb_df <- performBoxCox(mlb_df)
-
 ###################### Perform Arithmetic Transformation #######################
 
 transform_mlb <- mlb_rhc_df
@@ -285,8 +236,6 @@ mvn_result$multivariateNormality
 ## Add Team Success back to data frame
 mlb_df$Team.Success <- mlb_data$Team.Success
 
-write.csv(mlb_df, file = "images/rf_data.csv")
-
 ## Four category response LDA
 lda_model_4 <- lda(Team.Success ~ ., data = mlb_df[,-c(32,33)])
 lda_values_4 <- predict(lda_model_4)$x
@@ -294,74 +243,93 @@ lda_values_4 <- predict(lda_model_4)$x
 
 mlb_lda_4 <- as.data.frame(lda_values_4)
 mlb_lda_4$Team.Success <- mlb_df$Team.Success
-# mlb_lda_4$Year <- substr(rownames(mlb_lda_4), nchar(rownames(mlb_lda_4)) - 3,
-#                         nchar(rownames(mlb_lda_4)))
 
-## Train-test split
-# time_slices <- createTimeSlices(1:nrow(mlb_df),
-#                                 initialWindow = floor(0.8 * nrow(mlb_df)),
-#                                 horizon = 0)
+## Split data into training and testing sets
+getSplitRatio <- function(df) {
+  ## @df = data frame to determine optimal train-test split ratio
+  ## returns proportion of data set to include in training set
+  
+  ## use calcSplitRatio function to determine optimal split
+  calcRatio <- calcSplitRatio(df = df)
+  
+  ## if function returns an optimal split with less than 50% in training set
+  ## return 0.50 so that trainign set is not less than half the data set
+  
+  if (calcRatio < 0.50) {
+    return(0.50)
+  } else {
+    return(calcRatio)
+  }
+}
 
-## Split data into training (80%) and testing (20%) sets
+ratio <- getSplitRatio(mlb_lda_4)
 
 # Set the seed for reproducibility
 set.seed(123)
 
-# Create stratified train-test split (80% training, 20% test)
-train_index <- createDataPartition(mlb_lda_4$Team.Success, p = 0.8, list = FALSE)
-
-################################################################################
+# Create stratified train-test split
+train_index <- createDataPartition(mlb_lda_4$Team.Success, p = ratio, list = FALSE)
 
 # Split the data into training and test sets
 train_data <- mlb_lda_4[train_index, ]
-test_data <- mlb_lda_2[-train_index, ]
+test_data <- mlb_lda_4[-train_index, ]
 
-# Define the predictor variables (excluding the response variable)
-train_x <- train_data %>% dplyr::select(-Team.Success)
-train_y <- train_data$Team.Success
+
+## Rename levels in Team.Success so train() can read them
+levels(train_data$Team.Success)[levels(train_data$Team.Success) == "1"] <- "missed_po"
+levels(train_data$Team.Success)[levels(train_data$Team.Success) == "2"] <- "made_po"
+levels(train_data$Team.Success)[levels(train_data$Team.Success) == "3"] <- "runner_up"
+levels(train_data$Team.Success)[levels(train_data$Team.Success) == "4"] <- "ws_winner"
+
+levels(train_data$Team.Success)
+
+# Define trainControl with SMOTE
+ctrl <- trainControl(
+  method = "cv",           # k-fold cross-validation
+  number = 10,              # 10 folds
+  sampling = "smote", # apply SMOTE inside each fold
+  classProbs = TRUE,
+  savePredictions = "final"
+)
+
+# Train KNN model
+set.seed(500)
+knn_model_multi <- train(
+  Team.Success ~ ., 
+  data = train_data,
+  method = "knn",
+  trControl = ctrl,
+  preProcess = c("center", "scale"),  # scale predictors before KNN
+  tuneLength = 10                     # search over 10 different K values
+)
+
+print(knn_model_multi)
 
 # Define the predictor variables for the test set
+
+## Rename levels in Team.Success so they match training data
+levels(test_data$Team.Success)[levels(test_data$Team.Success) == "1"] <- "missed_po"
+levels(test_data$Team.Success)[levels(test_data$Team.Success) == "2"] <- "made_po"
+levels(test_data$Team.Success)[levels(test_data$Team.Success) == "3"] <- "runner_up"
+levels(test_data$Team.Success)[levels(test_data$Team.Success) == "4"] <- "ws_winner"
+
+levels(test_data$Team.Success)
+
+# Scale numeric data of test set
 test_x <- test_data %>% dplyr::select(-Team.Success)
+test_x <- as.data.frame(scale(test_x))
 test_y <- test_data$Team.Success
 
-# Scale train_x and test_x
-train_x <- scale(train_x)
-test_x <- scale(test_x)
+test_data <- test_x %>% mutate(Team.Success = test_y)
 
-# Looking for the best k value
-accuracy_scores <- c() # setting up a variable to store the accuracy scores
+# Predict test set response with trained cross-validated kNN
+predictions <- predict(knn_model_multi, newdata = test_data)
 
-# Loop to check which k value has the best accuracy
-for (k_value in 1:20) {
-  predicted_k <- knn(train = train_data, test = test_data, cl = train_y, k = k_value)
-  acc <- mean(predicted_k == test_y)
-  accuracy_scores <- c(accuracy_scores, acc)
-}
-
-# Best k
-best_k <- which.max(accuracy_scores)
-best_acc <- max(accuracy_scores)
-cat("Best k:", best_k, "\nBest Accuracy:", round(best_acc, 4))
-
-# Plot accuracy vs k (run plot and abline together)
-plot(1:20, accuracy_scores, type = "b", pch = 19,
-     xlab = "k", ylab = "Accuracy",
-     main = "Accuracy by k-value for KNN with LDA",
-     sub = "Four Category Team Success Response")
-abline(v = best_k, col = "red", lty = 2)
-
-# Running a knn model using k=9
-predicted <- knn(train = train_x, test = test_x, cl = train_y, k = best_k)
-
-# Evaluate accuracy
-accuracy <- mean(predicted == test_y)
-print(accuracy)
-
-# Looking at Confusion matrix
-table(Predicted = predicted, Actual = test_y)
+# Create detailed confusion matrix
+confusionMatrix(predictions, test_data$Team.Success)
 
 # Creating a heatmap table for the confusion matrix
-conf_matrix <- table(Predicted = predicted, Actual = test_y) # Create the table as a matrix
+conf_matrix <- table(Predicted = predictions, Actual = test_data$Team.Success) # Create the table as a matrix
 conf_df <- as.data.frame(conf_matrix) # Convert to data frame for ggplot
 
 # Plot heatmap
@@ -369,74 +337,8 @@ ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
   geom_tile(color = "white") +
   geom_text(aes(label = Freq), size = 5, fontface = "bold") +
   scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
-  labs(title = "Confusion Matrix for KNN with LDA",
-       subtitle = "Four Category Team Success Response",
-       x = "Team Success",
-       y = "Predicted",
-       fill = "Count") +
-  theme_minimal(base_size = 14)
-
-################################################################################
-
-# Split the data into training and test sets
-train_data <- mlb_df[train_index, ]
-test_data <- mlb_df[-train_index, ]
-
-# Define the predictor variables (excluding the response variable)
-train_x <- train_data %>% dplyr::select(-Team.Success)
-train_y <- train_data$Team.Success
-
-# Define the predictor variables for the test set
-test_x <- test_data %>% dplyr::select(-Team.Success)
-test_y <- test_data$Team.Success
-
-# Scale train_x and test_x
-train_x <- scale(train_x)
-test_x <- scale(test_x)
-
-# Looking for the best k value
-accuracy_scores <- c() # setting up a variable to store the accuracy scores
-
-# Loop to check which k value has the best accuracy
-for (k_value in 1:20) {
-  predicted_k <- knn(train = train_data, test = test_data, cl = train_y, k = k_value)
-  acc <- mean(predicted_k == test_y)
-  accuracy_scores <- c(accuracy_scores, acc)
-}
-
-# Best k
-best_k <- which.max(accuracy_scores)
-best_acc <- max(accuracy_scores)
-cat("Best k:", best_k, "\nBest Accuracy:", round(best_acc, 4))
-
-# Plot accuracy vs k (run plot and abline together)
-plot(1:20, accuracy_scores, type = "b", pch = 19,
-     xlab = "k", ylab = "Accuracy",
-     main = "Accuracy by k-value for KNN with LDA",
-     sub = "Four Category Team Success Response")
-abline(v = best_k, col = "red", lty = 2)
-
-# Running a knn model using k=9
-predicted <- knn(train = train_x, test = test_x, cl = train_y, k = best_k)
-
-# Evaluate accuracy
-accuracy <- mean(predicted == test_y)
-print(accuracy)
-
-# Looking at Confusion matrix
-table(Predicted = predicted, Actual = test_y)
-
-# Creating a heatmap table for the confusion matrix
-conf_matrix <- table(Predicted = predicted, Actual = test_y) # Create the table as a matrix
-conf_df <- as.data.frame(conf_matrix) # Convert to data frame for ggplot
-
-# Plot heatmap
-ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
-  geom_tile(color = "white") +
-  geom_text(aes(label = Freq), size = 5, fontface = "bold") +
-  scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
-  labs(title = "Confusion Matrix for KNN with LDA",
-       subtitle = "Four Category Team Success Response",
+  labs(title = "10-fold cross-validated kNN with LDA",
+       subtitle = "Multiclass Team Success Response",
        x = "Team Success",
        y = "Predicted",
        fill = "Count") +
@@ -460,15 +362,11 @@ set.seed(321)
 # Create stratified train-test split (80% training, 20% test)
 train_index <- createDataPartition(mlb_lda_2$Team.Success, p = 0.8, list = FALSE)
 
-################################################################################
-
 # Split the data into training and test sets
 train_data <- mlb_lda_2[train_index, ]
 test_data <- mlb_lda_2[-train_index, ]
 
-# Define the predictor variables (excluding the response variable)
-train_x <- train_data %>% dplyr::select(-Team.Success)
-train_y <- train_data$Team.Success
+
 
 # Define the predictor variables for the test set
 test_x <- test_data %>% dplyr::select(-Team.Success)
@@ -525,96 +423,3 @@ ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
        y = "Predicted",
        fill = "Count") +
   theme_minimal(base_size = 14)
-
-
-################################################################################
-# Split the data into training and test sets
-train_data <- mlb_df[train_index, ]
-test_data <- mlb_df[-train_index, ]
-
-# Define the predictor variables (excluding the response variable)
-train_x <- train_data %>% dplyr::select(-Team.Success)
-train_y <- train_data$Team.Success
-
-# Define the predictor variables for the test set
-test_x <- test_data %>% dplyr::select(-Team.Success)
-test_y <- test_data$Team.Success
-
-# Scale train_x and test_x
-train_x <- scale(train_x)
-test_x <- scale(test_x)
-
-# Looking for the best k value
-accuracy_scores <- c() # setting up a variable to store the accuracy scores
-
-# Loop to check which k value has the best accuracy
-for (k_value in 1:20) {
-  predicted_k <- knn(train = train_data, test = test_data, cl = train_y, k = k_value)
-  acc <- mean(predicted_k == test_y)
-  accuracy_scores <- c(accuracy_scores, acc)
-}
-
-# Best k
-best_k <- which.max(accuracy_scores)
-best_acc <- max(accuracy_scores)
-cat("Best k:", best_k, "\nBest Accuracy:", round(best_acc, 4))
-
-# Plot accuracy vs k (run plot and abline together)
-plot(1:20, accuracy_scores, type = "b", pch = 19,
-     xlab = "k", ylab = "Accuracy",
-     main = "Accuracy by k-value for KNN with LDA",
-     sub = "Binary Category Team Success Response")
-abline(v = best_k, col = "red", lty = 2)
-
-# Running a knn model using k=9
-predicted <- knn(train = train_x, test = test_x, cl = train_y, k = best_k)
-
-# Evaluate accuracy
-accuracy <- mean(predicted == test_y)
-print(accuracy)
-
-# Looking at Confusion matrix
-table(Predicted = predicted, Actual = test_y)
-
-# Creating a heatmap table for the confusion matrix
-conf_matrix <- table(Predicted = predicted, Actual = test_y) # Create the table as a matrix
-conf_df <- as.data.frame(conf_matrix) # Convert to data frame for ggplot
-
-# Plot heatmap
-ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
-  geom_tile(color = "white") +
-  geom_text(aes(label = Freq), size = 5, fontface = "bold") +
-  scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
-  labs(title = "Confusion Matrix for KNN with LDA",
-       subtitle = "Binary Team Success Response",
-       x = "Team Success",
-       y = "Predicted",
-       fill = "Count") +
-  theme_minimal(base_size = 14)
-
-
-################################# Random Forest ################################
-
-rf_data <- read.csv("images/rf_data.csv", row.names = 1)
-
-set.seed(101)
-
-# Create stratified train-test split (80% training, 20% test)
-train_index <- createDataPartition(rf_data$Team.Success, p = 0.8, list = FALSE)
-
-# Split the data into training and test sets
-train_data <- rf_data[train_index, ]
-test_data <- rf_data[-train_index, ]
-
-# Define the predictor variables (excluding the response variable)
-train_x <- train_data %>% dplyr::select(-Team.Success)
-train_y <- train_data$Team.Success
-
-# Define the predictor variables for the test set
-test_x <- test_data %>% dplyr::select(-Team.Success)
-test_y <- test_data$Team.Success
-
-rf_model <- randomForest(Team.Success ~ ., data = train_data, ntree = 500)
-
-
-#####
