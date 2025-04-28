@@ -348,7 +348,8 @@ ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
 
 ## Binary category response LDA
 
-mlb_df$Team.Success <- ifelse(mlb_df$Team.Success == 1,0,1)
+mlb_df$Team.Success <- ifelse(mlb_df$Team.Success == "1","0","1")
+mlb_df$Team.Success <- as.factor(mlb_df$Team.Success)
 
 lda_model_2 <- lda(Team.Success ~ ., data = mlb_df[,-c(32,33)])
 lda_values_2 <- predict(lda_model_2)$x
@@ -356,60 +357,69 @@ lda_values_2 <- predict(lda_model_2)$x
 mlb_lda_2 <- as.data.frame(lda_values_2)
 mlb_lda_2$Team.Success <- mlb_df$Team.Success
 
+ratio <- getSplitRatio(mlb_lda_2)
+
 # Set the seed for reproducibility
 set.seed(321)
 
-# Create stratified train-test split (80% training, 20% test)
-train_index <- createDataPartition(mlb_lda_2$Team.Success, p = 0.8, list = FALSE)
+# Create stratified train-test split
+train_index <- createDataPartition(mlb_lda_2$Team.Success, p = ratio, list = FALSE)
 
 # Split the data into training and test sets
 train_data <- mlb_lda_2[train_index, ]
 test_data <- mlb_lda_2[-train_index, ]
 
+## Rename levels in Team.Success so train() can read them
+levels(train_data$Team.Success)[levels(train_data$Team.Success) == "0"] <- "missed_po"
+levels(train_data$Team.Success)[levels(train_data$Team.Success) == "1"] <- "made_po"
+
+levels(train_data$Team.Success)
+
+# Define trainControl with SMOTE
+ctrl <- trainControl(
+  method = "cv",           # k-fold cross-validation
+  number = 10,              # 10 folds
+  sampling = "smote", # apply SMOTE inside each fold
+  classProbs = TRUE,
+  savePredictions = "final"
+)
+
+# Train KNN model
+set.seed(501)
+knn_model_binary <- train(
+  Team.Success ~ ., 
+  data = train_data,
+  method = "knn",
+  trControl = ctrl,
+  preProcess = c("center", "scale"),  # scale predictors before KNN
+  tuneLength = 10                     # search over 10 different K values
+)
+
+print(knn_model_binary)
 
 
-# Define the predictor variables for the test set
+## Rename levels in Team.Success so they match training data
+levels(test_data$Team.Success)[levels(test_data$Team.Success) == "0"] <- "missed_po"
+levels(test_data$Team.Success)[levels(test_data$Team.Success) == "1"] <- "made_po"
+levels(test_data$Team.Success)
+
+# Scale numeric data of test set
 test_x <- test_data %>% dplyr::select(-Team.Success)
+test_x <- as.data.frame(scale(test_x))
+# Get test response data
 test_y <- test_data$Team.Success
 
-# Scale train_x and test_x
-train_x <- scale(train_x)
-test_x <- scale(test_x)
+# Set test_data to scaled predictors and response
+test_data <- test_x %>% mutate(Team.Success = test_y)
 
-# Looking for the best k value
-accuracy_scores <- c() # setting up a variable to store the accuracy scores
-
-# Loop to check which k value has the best accuracy
-for (k_value in 1:20) {
-  predicted_k <- knn(train = train_data, test = test_data, cl = train_y, k = k_value)
-  acc <- mean(predicted_k == test_y)
-  accuracy_scores <- c(accuracy_scores, acc)
-}
-
-# Best k
-best_k <- which.max(accuracy_scores)
-best_acc <- max(accuracy_scores)
-cat("Best k:", best_k, "\nBest Accuracy:", round(best_acc, 4))
-
-# Plot accuracy vs k (run plot and abline together)
-plot(1:20, accuracy_scores, type = "b", pch = 19,
-     xlab = "k", ylab = "Accuracy",
-     main = "Accuracy by k-value for KNN with LDA",
-     sub = "Binary Category Team Success Response")
-abline(v = best_k, col = "red", lty = 2)
-
-# Running a knn model using k=9
-predicted <- knn(train = train_x, test = test_x, cl = train_y, k = best_k)
-
-# Evaluate accuracy
-accuracy <- mean(predicted == test_y)
-print(accuracy)
+# Predict response using 10-fold CV kNN model
+predictions <- predict(knn_model_binary, newdata = test_data)
 
 # Looking at Confusion matrix
-table(Predicted = predicted, Actual = test_y)
+confusionMatrix(predictions, test_data$Team.Success)
 
 # Creating a heatmap table for the confusion matrix
-conf_matrix <- table(Predicted = predicted, Actual = test_y) # Create the table as a matrix
+conf_matrix <- table(Predicted = predictions, Actual = test_y) # Create the table as a matrix
 conf_df <- as.data.frame(conf_matrix) # Convert to data frame for ggplot
 
 # Plot heatmap
@@ -417,7 +427,7 @@ ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
   geom_tile(color = "white") +
   geom_text(aes(label = Freq), size = 5, fontface = "bold") +
   scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
-  labs(title = "Confusion Matrix for KNN with LDA",
+  labs(title = "10-fold cross-validated kNN with LDA",
        subtitle = "Binary Team Success Response",
        x = "Team Success",
        y = "Predicted",
