@@ -304,6 +304,7 @@ knn_model_multi <- train(
 )
 
 print(knn_model_multi)
+plot(knn_model_multi)
 
 # Define the predictor variables for the test set
 
@@ -396,7 +397,7 @@ knn_model_binary <- train(
 )
 
 print(knn_model_binary)
-
+plot(knn_model_binary)
 
 ## Rename levels in Team.Success so they match training data
 levels(test_data$Team.Success)[levels(test_data$Team.Success) == "0"] <- "missed_po"
