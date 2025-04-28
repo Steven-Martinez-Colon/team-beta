@@ -100,12 +100,14 @@ confusionMatrix(pred, actual)
 
 ```{R}
 # Load Data
-data <- read.csv("C:\\Users\\student\\Documents\\GitHub\\team-beta\\images\\rf_data.csv")
+rf_data <- read.csv("C:/Users/janna/Documents/Merrimack MSDS/team-beta/images/rf_data.csv", check.names = F, row.names = 1)
 
-# Remove Non-numeric Data
-data = data %>% select(-X)
+rf_data$Team.Success <- as.factor(rf_data$Team.Success)
 
-head(data)
+train_index <- createDataPartition(rf_data$Team.Success, p = 0.89, list = F)
+
+train_data <- rf_data[train_index,]
+test_data <- rf_data[-train_index,]
 
 ```
 
@@ -113,30 +115,29 @@ head(data)
 # Set the seed for reproducibility
 set.seed(123)
 
-data$Team.Success <- as.factor(data$Team.Success)
+# train_data$Team.Success <- as.factor(data$Team.Success)
 
 # Create stratified train-test split
-train_index_new <- createDataPartition(data$Team.Success, p = 0.78, list = FALSE)
+train_index <- createDataPartition(data$Team.Success, p = 0.78, list = FALSE)
 
 # Split the data into training and test sets
-train_data_new <- data[train_index_new, ]
-test_data_new <- data[-train_index_new, ]
+train_data <- data[train_index, ]
+test_data <- data[-train_index, ]
 
 ```
 
 ```{R}
 ## Rename levels in Team.Success so train() can read them
-levels(train_data_new$Team.Success)[levels(train_data_new$Team.Success) == "1"] <- "missed_po"
-levels(train_data_new$Team.Success)[levels(train_data_new$Team.Success) == "2"] <- "made_po"
-levels(train_data_new$Team.Success)[levels(train_data_new$Team.Success) == "3"] <- "runner_up"
-levels(train_data_new$Team.Success)[levels(train_data_new$Team.Success) == "4"] <- "ws_winner"
-levels(train_data_new$Team.Success)
-
+levels(train_data$Team.Success)[levels(train_data$Team.Success) == "1"] <- "missed_po"
+levels(train_data$Team.Success)[levels(train_data$Team.Success) == "2"] <- "made_po"
+levels(train_data$Team.Success)[levels(train_data$Team.Success) == "3"] <- "runner_up"
+levels(train_data$Team.Success)[levels(train_data$Team.Success) == "4"] <- "ws_winner"
+levels(train_data$Team.Success)
 ```
 
 ```{R}
 # Define trainControl with SMOTE
-ctrl_new <- trainControl(
+ctrl <- trainControl(
   method = "cv",           # k-fold cross-validation
   number = 10,              # 10 folds
   sampling = "smote", # apply SMOTE inside each fold
@@ -149,53 +150,60 @@ ctrl_new <- trainControl(
 ```{R}
 # Train KNN model
 set.seed(500)
-knn_model_new <- train(
+knn_model <- train(
   Team.Success ~ ., 
-  data = train_data_new,
+  data = train_data,
   method = "knn",
-  trControl = ctrl_new,
+  trControl = ctrl,
   preProcess = c("center", "scale"),  # scale predictors before KNN
   tuneLength = 10                     # search over 10 different K values
 )
 
 ```
 
+
+```{r}
+print(knn_model)
+```
+
+
+
 ```{R}
 ## Rename levels in Team.Success so they match training data
-levels(test_data_new$Team.Success)[levels(test_data_new$Team.Success) == "1"] <- "missed_po"
-levels(test_data_new$Team.Success)[levels(test_data_new$Team.Success) == "2"] <- "made_po"
-levels(test_data_new$Team.Success)[levels(test_data_new$Team.Success) == "3"] <- "runner_up"
-levels(test_data_new$Team.Success)[levels(test_data_new$Team.Success) == "4"] <- "ws_winner"
-levels(test_data_new$Team.Success)
+levels(test_data$Team.Success)[levels(test_data$Team.Success) == "1"] <- "missed_po"
+levels(test_data$Team.Success)[levels(test_data$Team.Success) == "2"] <- "made_po"
+levels(test_data$Team.Success)[levels(test_data$Team.Success) == "3"] <- "runner_up"
+levels(test_data$Team.Success)[levels(test_data$Team.Success) == "4"] <- "ws_winner"
+levels(test_data$Team.Success)
 
 ```
 
 ```{R}
 # Scale numeric data of test set
-test_x_new <- test_data_new %>% dplyr::select(-Team.Success)
-test_x_new <- as.data.frame(scale(test_x_new))
-test_y_new <- test_data_new$Team.Success
+test_x <- test_data %>% dplyr::select(-Team.Success)
+test_x <- as.data.frame(scale(test_x))
+test_y <- test_data$Team.Success
 
-test_data_new <- test_x_new %>% mutate(Team.Success = test_y_new)
+test_data <- test_x %>% mutate(Team.Success = test_y)
 
 ```
 
 ```{R}
 # Predict test set response with trained cross-validated kNN
-predictions_new <- predict(knn_model_new, newdata = test_data_new)
+predictions <- predict(knn_model_new, newdata = test_data)
 
 # Create detailed confusion matrix
-confusionMatrix(predictions_new, test_data_new$Team.Success)
+confusionMatrix(predictions, test_data$Team.Success)
 
 ```
 
 ```{R}
 # Creating a heatmap table for the confusion matrix
-conf_matrix_new <- table(Predicted = predictions_new, Actual = test_data_new$Team.Success) # Create the table as a matrix
-conf_df_new <- as.data.frame(conf_matrix_new) # Convert to data frame for ggplot
+conf_matrix <- table(Predicted = predictions, Actual = test_data$Team.Success) # Create the table as a matrix
+conf_df <- as.data.frame(conf_matrix) # Convert to data frame for ggplot
 
 # Plot heatmap
-ggplot(conf_df_new, aes(x = Actual, y = Predicted, fill = Freq)) +
+ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
   geom_tile(color = "white") +
   geom_text(aes(label = Freq), size = 5, fontface = "bold") +
   scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
