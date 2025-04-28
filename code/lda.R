@@ -310,6 +310,74 @@ set.seed(123)
 # Create stratified train-test split (80% training, 20% test)
 train_index <- createDataPartition(mlb_lda_4$Team.Success, p = 0.8, list = FALSE)
 
+################################################################################
+
+# Split the data into training and test sets
+train_data <- mlb_lda_4[train_index, ]
+test_data <- mlb_lda_2[-train_index, ]
+
+# Define the predictor variables (excluding the response variable)
+train_x <- train_data %>% dplyr::select(-Team.Success)
+train_y <- train_data$Team.Success
+
+# Define the predictor variables for the test set
+test_x <- test_data %>% dplyr::select(-Team.Success)
+test_y <- test_data$Team.Success
+
+# Scale train_x and test_x
+train_x <- scale(train_x)
+test_x <- scale(test_x)
+
+# Looking for the best k value
+accuracy_scores <- c() # setting up a variable to store the accuracy scores
+
+# Loop to check which k value has the best accuracy
+for (k_value in 1:20) {
+  predicted_k <- knn(train = train_data, test = test_data, cl = train_y, k = k_value)
+  acc <- mean(predicted_k == test_y)
+  accuracy_scores <- c(accuracy_scores, acc)
+}
+
+# Best k
+best_k <- which.max(accuracy_scores)
+best_acc <- max(accuracy_scores)
+cat("Best k:", best_k, "\nBest Accuracy:", round(best_acc, 4))
+
+# Plot accuracy vs k (run plot and abline together)
+plot(1:20, accuracy_scores, type = "b", pch = 19,
+     xlab = "k", ylab = "Accuracy",
+     main = "Accuracy by k-value for KNN with LDA",
+     sub = "Four Category Team Success Response")
+abline(v = best_k, col = "red", lty = 2)
+
+# Running a knn model using k=9
+predicted <- knn(train = train_x, test = test_x, cl = train_y, k = best_k)
+
+# Evaluate accuracy
+accuracy <- mean(predicted == test_y)
+print(accuracy)
+
+# Looking at Confusion matrix
+table(Predicted = predicted, Actual = test_y)
+
+# Creating a heatmap table for the confusion matrix
+conf_matrix <- table(Predicted = predicted, Actual = test_y) # Create the table as a matrix
+conf_df <- as.data.frame(conf_matrix) # Convert to data frame for ggplot
+
+# Plot heatmap
+ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 5, fontface = "bold") +
+  scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
+  labs(title = "Confusion Matrix for KNN with LDA",
+       subtitle = "Four Category Team Success Response",
+       x = "Team Success",
+       y = "Predicted",
+       fill = "Count") +
+  theme_minimal(base_size = 14)
+
+################################################################################
+
 # Split the data into training and test sets
 train_data <- mlb_df[train_index, ]
 test_data <- mlb_df[-train_index, ]
@@ -392,6 +460,74 @@ set.seed(321)
 # Create stratified train-test split (80% training, 20% test)
 train_index <- createDataPartition(mlb_lda_2$Team.Success, p = 0.8, list = FALSE)
 
+################################################################################
+
+# Split the data into training and test sets
+train_data <- mlb_lda_2[train_index, ]
+test_data <- mlb_lda_2[-train_index, ]
+
+# Define the predictor variables (excluding the response variable)
+train_x <- train_data %>% dplyr::select(-Team.Success)
+train_y <- train_data$Team.Success
+
+# Define the predictor variables for the test set
+test_x <- test_data %>% dplyr::select(-Team.Success)
+test_y <- test_data$Team.Success
+
+# Scale train_x and test_x
+train_x <- scale(train_x)
+test_x <- scale(test_x)
+
+# Looking for the best k value
+accuracy_scores <- c() # setting up a variable to store the accuracy scores
+
+# Loop to check which k value has the best accuracy
+for (k_value in 1:20) {
+  predicted_k <- knn(train = train_data, test = test_data, cl = train_y, k = k_value)
+  acc <- mean(predicted_k == test_y)
+  accuracy_scores <- c(accuracy_scores, acc)
+}
+
+# Best k
+best_k <- which.max(accuracy_scores)
+best_acc <- max(accuracy_scores)
+cat("Best k:", best_k, "\nBest Accuracy:", round(best_acc, 4))
+
+# Plot accuracy vs k (run plot and abline together)
+plot(1:20, accuracy_scores, type = "b", pch = 19,
+     xlab = "k", ylab = "Accuracy",
+     main = "Accuracy by k-value for KNN with LDA",
+     sub = "Binary Category Team Success Response")
+abline(v = best_k, col = "red", lty = 2)
+
+# Running a knn model using k=9
+predicted <- knn(train = train_x, test = test_x, cl = train_y, k = best_k)
+
+# Evaluate accuracy
+accuracy <- mean(predicted == test_y)
+print(accuracy)
+
+# Looking at Confusion matrix
+table(Predicted = predicted, Actual = test_y)
+
+# Creating a heatmap table for the confusion matrix
+conf_matrix <- table(Predicted = predicted, Actual = test_y) # Create the table as a matrix
+conf_df <- as.data.frame(conf_matrix) # Convert to data frame for ggplot
+
+# Plot heatmap
+ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 5, fontface = "bold") +
+  scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
+  labs(title = "Confusion Matrix for KNN with LDA",
+       subtitle = "Binary Team Success Response",
+       x = "Team Success",
+       y = "Predicted",
+       fill = "Count") +
+  theme_minimal(base_size = 14)
+
+
+################################################################################
 # Split the data into training and test sets
 train_data <- mlb_df[train_index, ]
 test_data <- mlb_df[-train_index, ]
@@ -479,3 +615,6 @@ test_x <- test_data %>% dplyr::select(-Team.Success)
 test_y <- test_data$Team.Success
 
 rf_model <- randomForest(Team.Success ~ ., data = train_data, ntree = 500)
+
+
+#####
