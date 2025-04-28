@@ -119,8 +119,8 @@ data$Team.Success <- as.factor(data$Team.Success)
 train_index_new <- createDataPartition(data$Team.Success, p = 0.78, list = FALSE)
 
 # Split the data into training and test sets
-train_data_new <- data[train_index, ]
-test_data_new <- data[-train_index, ]
+train_data_new <- data[train_index_new, ]
+test_data_new <- data[-train_index_new, ]
 
 ```
 
@@ -150,7 +150,7 @@ ctrl_new <- trainControl(
 set.seed(500)
 knn_model_new <- train(
   Team.Success ~ ., 
-  data = train_data,
+  data = train_data_new,
   method = "knn",
   trControl = ctrl_new,
   preProcess = c("center", "scale"),  # scale predictors before KNN
@@ -161,18 +161,18 @@ knn_model_new <- train(
 
 ```{R}
 ## Rename levels in Team.Success so they match training data
-levels(test_data$Team.Success)[levels(test_data$Team.Success) == "1"] <- "missed_po"
-levels(test_data$Team.Success)[levels(test_data$Team.Success) == "2"] <- "made_po"
-levels(test_data$Team.Success)[levels(test_data$Team.Success) == "3"] <- "runner_up"
-levels(test_data$Team.Success)[levels(test_data$Team.Success) == "4"] <- "ws_winner"
-levels(test_data$Team.Success)
+levels(test_data_new$Team.Success)[levels(test_data_new$Team.Success) == "1"] <- "missed_po"
+levels(test_data_new$Team.Success)[levels(test_data_new$Team.Success) == "2"] <- "made_po"
+levels(test_data_new$Team.Success)[levels(test_data_new$Team.Success) == "3"] <- "runner_up"
+levels(test_data_new$Team.Success)[levels(test_data_new$Team.Success) == "4"] <- "ws_winner"
+levels(test_data_new$Team.Success)
 
 ```
 
 ```{R}
 # Scale numeric data of test set
 test_x_new <- test_data_new %>% dplyr::select(-Team.Success)
-test_x_new <- as.data.frame(scale(test_x))
+test_x_new <- as.data.frame(scale(test_x_new))
 test_y_new <- test_data_new$Team.Success
 
 test_data_new <- test_x_new %>% mutate(Team.Success = test_y_new)
@@ -184,7 +184,7 @@ test_data_new <- test_x_new %>% mutate(Team.Success = test_y_new)
 predictions_new <- predict(knn_model_new, newdata = test_data_new)
 
 # Create detailed confusion matrix
-confusionMatrix(predictions_new, test_data$Team.Success)
+confusionMatrix(predictions_new, test_data_new$Team.Success)
 
 ```
 
