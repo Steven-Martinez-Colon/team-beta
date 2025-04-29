@@ -306,7 +306,22 @@ knn_model_multi <- train(
 print(knn_model_multi)
 plot(knn_model_multi)
 
-# Define the predictor variables for the test set
+# Extract results
+train_results_multi <- knn_model_multi$results
+
+# Plot
+ggplot(train_results_multi, aes(x = k, y = Accuracy)) +
+  geom_line() +
+  geom_point() +
+  geom_vline(xintercept = train_results_multi$k[which.max(train_results_multi$Accuracy)],
+             color = "red", linetype = "dashed") +
+  scale_x_continuous(breaks = seq(min(train_results_multi$k), max(train_results_multi$k),
+                                  by = 2)) + 
+  labs(title = "k-value Tuning for k-Nearest Neighbors (LDA)",
+       x = "Number of Neighbors (k)",
+       y = "Validation Accuracy") +
+  theme_classic()
+
 
 ## Rename levels in Team.Success so they match training data
 levels(test_data$Team.Success)[levels(test_data$Team.Success) == "1"] <- "missed_po"
@@ -340,7 +355,7 @@ ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
   scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
   labs(title = "10-fold cross-validated kNN with LDA",
        subtitle = "Multiclass Team Success Response",
-       x = "Team Success",
+       x = "Actual Team Success",
        y = "Predicted",
        fill = "Count") +
   theme_minimal(base_size = 14)
@@ -398,6 +413,22 @@ knn_model_binary <- train(
 
 print(knn_model_binary)
 plot(knn_model_binary)
+
+# Extract results
+train_results_binary <- knn_model_binary$results
+
+# Plot
+ggplot(train_results_binary, aes(x = k, y = Accuracy)) +
+  geom_line() +
+  geom_point() +
+  geom_vline(xintercept = train_results_binary$k[which.max(train_results_binary$Accuracy)],
+             color = "red", linetype = "dashed") +
+  scale_x_continuous(breaks = seq(min(train_results_binary$k), max(train_results_binary$k),
+                                  by = 2)) + 
+  labs(title = "k-value Tuning for k-Nearest Neighbors (LDA)",
+       x = "Number of Neighbors (k)",
+       y = "Validation Accuracy") +
+  theme_classic()
 
 ## Rename levels in Team.Success so they match training data
 levels(test_data$Team.Success)[levels(test_data$Team.Success) == "0"] <- "missed_po"
