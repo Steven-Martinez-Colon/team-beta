@@ -17,7 +17,7 @@ library(moments)
 library(FactoMineR)
 library(factoextra)
 library(MASS)
-source("code/calcSplitRatio-3.R")
+# source("code/calcSplitRatio-3.R")
 library(MVN)
 library(class)
 library(randomForest)
@@ -28,7 +28,7 @@ dataset_folder <- paste(getwd(),"/final_data",sep="")
 data_file <- paste(dataset_folder,"/final_dataset.csv", sep = "")
 
 ## Read data without changing special chars in column names
-mlb_data <- read.csv(data_file, check.names = FALSE)
+mlb_data <- read.csv("C:\\Users\\student\\Documents\\GitHub\\team-beta\\final_data\\final_dataset.csv", check.names = FALSE)
 
 ############################### Clean Data #####################################
 
@@ -223,6 +223,26 @@ for (colname in non_normal_cols) {
 
 mlb_df <- transform_mlb
 
+############################## Train/test split ################################
+
+## Split data into training and testing sets
+getSplitRatio <- function(df) {
+  ## @df = data frame to determine optimal train-test split ratio
+  ## returns proportion of data set to include in training set
+  
+  ## use calcSplitRatio function to determine optimal split
+  calcRatio <- calcSplitRatio(df = df)
+  
+  ## if function returns an optimal split with less than 50% in training set
+  ## return 0.50 so that trainign set is not less than half the data set
+  
+  if (calcRatio < 0.50) {
+    return(0.50)
+  } else {
+    return(calcRatio)
+  }
+}
+
 ############################## LDA Assumptions #################################
 
 
@@ -243,24 +263,6 @@ lda_values_4 <- predict(lda_model_4)$x
 
 mlb_lda_4 <- as.data.frame(lda_values_4)
 mlb_lda_4$Team.Success <- mlb_df$Team.Success
-
-## Split data into training and testing sets
-getSplitRatio <- function(df) {
-  ## @df = data frame to determine optimal train-test split ratio
-  ## returns proportion of data set to include in training set
-  
-  ## use calcSplitRatio function to determine optimal split
-  calcRatio <- calcSplitRatio(df = df)
-  
-  ## if function returns an optimal split with less than 50% in training set
-  ## return 0.50 so that trainign set is not less than half the data set
-  
-  if (calcRatio < 0.50) {
-    return(0.50)
-  } else {
-    return(calcRatio)
-  }
-}
 
 ratio <- getSplitRatio(mlb_lda_4)
 
@@ -506,3 +508,98 @@ knn_model_og <- train(
 )
 
 print(knn_model_og)
+
+
+############################## Binary response #################################
+#############################JAMES START HERE ##################################
+
+## change the filename HERE
+rf_data <- read.csv("C:\\Users\\student\\Documents\\GitHub\\team-beta\\images\\rf_data.csv", check.names = F, row.names = 1)
+
+rf_data$Team.Success <- ifelse(mlb_df$Team.Success == "1","0","1")
+rf_data$Team.Success <- as.factor(mlb_df$Team.Success)
+
+# ratio <- getSplitRatio(rf_data)
+
+train_index <- createDataPartition(rf_data$Team.Success, p = 0.89, list = F)
+
+train_data <- rf_data[train_index,]
+test_data <- rf_data[-train_index,]
+
+## Rename levels in Team.Success so train() can read them
+levels(train_data$Team.Success)[levels(train_data$Team.Success) == "0"] <- "missed_po"
+levels(train_data$Team.Success)[levels(train_data$Team.Success) == "1"] <- "made_po"
+
+# Define trainControl with SMOTE
+ctrl <- trainControl(
+  method = "cv",           # k-fold cross-validation
+  number = 10,              # 10 folds
+  sampling = "smote", # apply SMOTE inside each fold
+  classProbs = TRUE,
+  savePredictions = "final"
+)
+
+# Train KNN model
+set.seed(600)
+knn_model_og_2 <- train(
+  Team.Success ~ ., 
+  data = train_data,
+  method = "knn",
+  trControl = ctrl,
+  preProcess = c("center", "scale"),  # scale predictors before KNN
+  tuneLength = 10                     # search over 10 different K values
+)
+
+print(knn_model_og_2)
+
+# Extract results
+train_results_binary <- knn_model_og_2$results
+
+# Plot
+ggplot(train_results_binary, aes(x = k, y = Accuracy)) +
+  geom_line() +
+  geom_point() +
+  geom_vline(xintercept = train_results_binary$k[which.max(train_results_binary$Accuracy)],
+             color = "red", linetype = "dashed") +
+  scale_x_continuous(breaks = seq(min(train_results_binary$k), max(train_results_binary$k),
+                                  by = 2)) + 
+  labs(title = "k-value Tuning for k-Nearest Neighbors (LDA)",
+       x = "Number of Neighbors (k)",
+       y = "Validation Accuracy") +
+  theme_classic()
+
+## Rename levels in Team.Success so they match training data
+levels(test_data$Team.Success)[levels(test_data$Team.Success) == "0"] <- "missed_po"
+levels(test_data$Team.Success)[levels(test_data$Team.Success) == "1"] <- "made_po"
+levels(test_data$Team.Success)
+
+# Scale numeric data of test set
+test_x <- test_data %>% dplyr::select(-Team.Success)
+test_x <- as.data.frame(scale(test_x))
+# Get test response data
+test_y <- test_data$Team.Success
+
+# Set test_data to scaled predictors and response
+test_data <- test_x %>% mutate(Team.Success = test_y)
+
+# Predict response using 10-fold CV kNN model
+predictions <- predict(knn_model_og_2, newdata = test_data)
+
+# Looking at Confusion matrix
+confusionMatrix(predictions, test_data$Team.Success)
+
+# Creating a heatmap table for the confusion matrix
+conf_matrix <- table(Predicted = predictions, Actual = test_y) # Create the table as a matrix
+conf_df <- as.data.frame(conf_matrix) # Convert to data frame for ggplot
+
+# Plot heatmap
+ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 5, fontface = "bold") +
+  scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
+  labs(title = "10-fold cross-validated kNN with LDA",
+       subtitle = "Binary Team Success Response",
+       x = "Team Success",
+       y = "Predicted",
+       fill = "Count") +
+  theme_minimal(base_size = 14)
