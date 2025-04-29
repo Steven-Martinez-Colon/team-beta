@@ -516,8 +516,8 @@ print(knn_model_og)
 ## change the filename HERE
 rf_data <- read.csv("insert_filename", check.names = F, row.names = 1)
 
-rf_data$Team.Success <- ifelse(mlb_df$Team.Success == "1","0","1")
-rf_data$Team.Success <- as.factor(mlb_df$Team.Success)
+rf_data$Team.Success <- ifelse(rf_data$Team.Success == "1","0","1")
+rf_data$Team.Success <- as.factor(rf_data$Team.Success)
 
 ratio <- getSplitRatio(rf_data)
 
