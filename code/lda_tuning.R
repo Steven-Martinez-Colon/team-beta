@@ -434,3 +434,44 @@ ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
        y = "Predicted",
        fill = "Count") +
   theme_minimal(base_size = 14)
+
+########################## Original Predictor data #############################
+
+rf_data_file <- paste(getwd(),"/images/rf_data.csv", sep = "")
+rf_data <- read.csv(rf_data_file, check.names = F, row.names = 1)
+
+rf_data$Team.Success <- as.factor(rf_data$Team.Success)
+ratio <- getSplitRatio(rf_data)
+
+train_index <- createDataPartition(rf_data$Team.Success, p = ratio, list = F)
+
+train_data <- rf_data[train_index,]
+test_data <- rf_data[-train_index,]
+
+## Rename levels in Team.Success so train() can read them
+levels(train_data$Team.Success)[levels(train_data$Team.Success) == "1"] <- "missed_po"
+levels(train_data$Team.Success)[levels(train_data$Team.Success) == "2"] <- "made_po"
+levels(train_data$Team.Success)[levels(train_data$Team.Success) == "3"] <- "runner_up"
+levels(train_data$Team.Success)[levels(train_data$Team.Success) == "4"] <- "ws_winner"
+
+# Define trainControl with SMOTE
+ctrl <- trainControl(
+  method = "cv",           # k-fold cross-validation
+  number = 10,              # 10 folds
+  sampling = "smote", # apply SMOTE inside each fold
+  classProbs = TRUE,
+  savePredictions = "final"
+)
+
+# Train KNN model
+set.seed(600)
+knn_model_og <- train(
+  Team.Success ~ ., 
+  data = train_data,
+  method = "knn",
+  trControl = ctrl,
+  preProcess = c("center", "scale"),  # scale predictors before KNN
+  tuneLength = 10                     # search over 10 different K values
+)
+
+print(knn_model_og)
