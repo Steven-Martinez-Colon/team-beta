@@ -45,14 +45,25 @@ balanced_df <- read.csv("images/rf_data.csv", row.names = 1, check.names = F)
 # Removing special characters in order to perform Random Forest
 balanced_df <- balanced_df %>% rename_with(make.names)
 
+# Loading the calcSplitRatio function from GitHub
+source("code/calcSplitRatio-3.R")
+
+# Finding the ideal split ratio
+calcSplitRatio(p = 78, balanced_df) # Split data into training (89%) and testing (11%) sets
+
 # Set seed
 set.seed(123)
+
+# Stratified split using createDataPartition
+train_index <- createDataPartition(balanced_df$`Team.Success`, p = 0.89, list = FALSE)
+train <- balanced_df[train_index, ]
+test <- balanced_df[-train_index, ]
 
 # Define your target variable
 target_var <- "Team.Success"  
 
 # Create stratified folds
-balanced_df$fold <- caret::createFolds(balanced_df[[target_var]], k = 10, list = FALSE)
+train$fold <- caret::createFolds(train[[target_var]], k = 10, list = FALSE)
 
 # Initialize results storage
 results_df <- data.frame(Fold = integer(), Validation_Accuracy = numeric(), Cumulative_Avg = numeric(), Training_OOB_Accuracy = numeric())
@@ -88,8 +99,8 @@ importance_list <- list()
 for (i in 1:10) {
   
   # Split into training and validation
-  train_data <- balanced_df %>% filter(fold != i) %>% select(-fold)
-  valid_data <- balanced_df %>% filter(fold == i) %>% select(-fold)
+  train_data <- train %>% filter(fold != i) %>% select(-fold)
+  valid_data <- train %>% filter(fold == i) %>% select(-fold)
   
   # Make sure target variable is a factor
   train_data[[target_var]] <- as.factor(train_data[[target_var]])
@@ -153,8 +164,11 @@ for (i in 1:10) {
 # Final cross-validation results table
 print(results_df)
 
-# Final average accuracy
+# Final average validation accuracy
 print(round(mean(results_df$Validation_Accuracy), 4))
+
+# Final average training accuracy
+print(round(mean(results_df$Training_OOB_Accuracy), 4))
 
 # ______________________________________
 
@@ -242,6 +256,28 @@ average_importance %>%
 
 # ____________________________________
 
+# Predict on test
+rf_pred <- predict(rf_model, newdata = test)
+
+# Evaluating random forest model
+confusionMatrix(rf_pred, as.factor(test$`Team.Success`))
+
+# Creating a heatmap table for the confusion matrix
+rf_conf_matrix <- table(Predicted = rf_pred, Actual = test$`Team.Success`) # Create the table as a matrix
+rf_conf_df <- as.data.frame(rf_conf_matrix) # Convert to data frame for ggplot
+
+# Plot heatmap
+ggplot(rf_conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 5, fontface = "bold") +
+  scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
+  labs(title = "Distribution of Team Success Across Predictions",
+       subtitle = "Random Forest",
+       x = "Team Success",
+       y = "Predicted",
+       fill = "Count") +
+  theme_minimal(base_size = 14)
+
 ################################# Random Forest with Predictors - Two classes ##############################
 
 # Loading dataset
@@ -253,15 +289,26 @@ binary_balanced_df <- binary_balanced_df %>% rename_with(make.names)
 # Changing Team Success to be binary (1 = Playoff team, 0 = Didn't make playoff)
 binary_balanced_df$Team.Success <- ifelse(binary_balanced_df$Team.Success == 1,0,1)
 
+# Loading the calcSplitRatio function from GitHub
+source("code/calcSplitRatio-3.R")
+
+# Finding the ideal split ratio
+calcSplitRatio(p = 78, binary_balanced_df) # Split data into training (89%) and testing (11%) sets
+
 
 # Set seed
 set.seed(123)
+
+# Stratified split using createDataPartition
+train_index <- createDataPartition(binary_balanced_df$`Team.Success`, p = 0.89, list = FALSE)
+train <- binary_balanced_df[train_index, ]
+test <- binary_balanced_df[-train_index, ]
 
 # Define your target variable
 target_var <- "Team.Success"
 
 # Create stratified folds
-binary_balanced_df$fold <- caret::createFolds(binary_balanced_df[[target_var]], k = 10, list = FALSE)
+train$fold <- caret::createFolds(train[[target_var]], k = 10, list = FALSE)
 
 # Initialize results storage
 results_df <- data.frame(Fold = integer(), Validation_Accuracy = numeric(), Cumulative_Avg = numeric(), Training_OOB_Accuracy = numeric())
@@ -280,8 +327,8 @@ importance_list <- list()
 for (i in 1:10) {
   
   # Split into training and validation
-  train_data <- binary_balanced_df %>% filter(fold != i) %>% select(-fold)
-  valid_data <- binary_balanced_df %>% filter(fold == i) %>% select(-fold)
+  train_data <- train %>% filter(fold != i) %>% select(-fold)
+  valid_data <- train %>% filter(fold == i) %>% select(-fold)
   
   # Make sure target variable is a factor
   train_data[[target_var]] <- as.factor(train_data[[target_var]])
@@ -341,8 +388,11 @@ for (i in 1:10) {
 # Final cross-validation results table
 print(results_df)
 
-# Final average accuracy
+# Final average validation accuracy
 print(round(mean(results_df$Validation_Accuracy), 4))
+
+# Final average training accuracy
+print(round(mean(results_df$Training_OOB_Accuracy), 4))
 
 # ______________________________________
 
@@ -385,7 +435,7 @@ ggplot(conf_matrix_df, aes(x = True, y = Predicted)) +
   scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
   labs(
     title = "Distribution of Team Success Across Cross-Validation Predictions",
-    subtitle = "Random Forest Model (5-Fold CV)",
+    subtitle = "Random Forest Model (10-Fold CV)",
     x = "Actual Team Success",
     y = "Predicted Team Success",
     fill = "Count"
@@ -430,7 +480,27 @@ average_importance %>%
 
 # ____________________________________
 
+# Predict on test
+rf_pred <- predict(rf_model, newdata = test)
 
+# Evaluating random forest model
+confusionMatrix(rf_pred, as.factor(test$`Team.Success`))
+
+# Creating a heatmap table for the confusion matrix
+rf_conf_matrix <- table(Predicted = rf_pred, Actual = test$`Team.Success`) # Create the table as a matrix
+rf_conf_df <- as.data.frame(rf_conf_matrix) # Convert to data frame for ggplot
+
+# Plot heatmap
+ggplot(rf_conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = Freq), size = 5, fontface = "bold") +
+  scale_fill_gradient(low = "#deebf7", high = "#3182bd") +
+  labs(title = "Distribution of Team Success Across Predictions",
+       subtitle = "Random Forest",
+       x = "Team Success",
+       y = "Predicted",
+       fill = "Count") +
+  theme_minimal(base_size = 14)
 
 
 
