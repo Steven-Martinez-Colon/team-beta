@@ -17,7 +17,7 @@ library(moments)
 library(FactoMineR)
 library(factoextra)
 library(MASS)
-source("code/calcSplitRatio-3.R")
+# source("code/calcSplitRatio-3.R")
 library(MVN)
 library(class)
 library(randomForest)
@@ -29,7 +29,7 @@ dataset_folder <- paste(getwd(),"/final_data",sep="")
 data_file <- paste(dataset_folder,"/final_dataset.csv", sep = "")
 
 ## Read data without changing special chars in column names
-mlb_data <- read.csv(data_file, check.names = FALSE)
+mlb_data <- read.csv("C:\\Users\\student\\Documents\\GitHub\\team-beta\\final_data\\final_dataset.csv", check.names = FALSE)
 
 ############################### Clean Data #####################################
 
@@ -549,14 +549,14 @@ print(knn_model_og)
 #############################JAMES START HERE ##################################
 
 ## change the filename HERE
-rf_data <- read.csv("insert_filename", check.names = F, row.names = 1)
+rf_data <- read.csv("C:\\Users\\student\\Documents\\GitHub\\team-beta\\images\\rf_data.csv", check.names = F, row.names = 1)
 
-rf_data$Team.Success <- ifelse(rf_data$Team.Success == "1","0","1")
-rf_data$Team.Success <- as.factor(rf_data$Team.Success)
+rf_data$Team.Success <- ifelse(mlb_df$Team.Success == "1","0","1")
+rf_data$Team.Success <- as.factor(mlb_df$Team.Success)
 
-ratio <- getSplitRatio(rf_data)
+# ratio <- getSplitRatio(rf_data)
 
-train_index <- createDataPartition(rf_data$Team.Success, p = ratio, list = F)
+train_index <- createDataPartition(rf_data$Team.Success, p = 0.89, list = F)
 
 train_data <- rf_data[train_index,]
 test_data <- rf_data[-train_index,]
