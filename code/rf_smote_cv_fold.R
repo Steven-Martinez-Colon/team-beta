@@ -284,7 +284,7 @@ ggplot(rf_conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
        fill = "Count") +
   theme_minimal(base_size = 14)
 
-# ______________ ROC Curves ___________________________-
+# ______________ ROC Curves ___________________________- WORK IN PROGRESS!!!!!!!!!!
 
 ## Create multiclass ROC curve
 
