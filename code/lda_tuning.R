@@ -407,7 +407,8 @@ ggplot(all_roc_df, aes(x = 1 - Specificity, y = Sensitivity, color = Class)) +
   scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
   scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
   labs(
-    title = "Multiclass ROC Curve (One-vs-All)",
+    title = "ROC Curve (One-vs-All)",
+    subtitle = "Multiclass kNN Model with LDA Results",
     x = "False Positive Rate (1 - Specificity)",
     y = "True Positive Rate (Sensitivity)",
     color = "Class"
@@ -568,7 +569,8 @@ ggplot(all_roc_df, aes(x = 1 - Specificity, y = Sensitivity, color = Class)) +
   scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
   scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
   labs(
-    title = "Multiclass ROC Curve (One-vs-All)",
+    title = "ROC Curve (One-vs-All)",
+    subtitle = "Binary kNN with LDA results",
     x = "False Positive Rate (1 - Specificity)",
     y = "True Positive Rate (Sensitivity)",
     color = "Class"
