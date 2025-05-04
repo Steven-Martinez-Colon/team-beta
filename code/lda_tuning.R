@@ -393,7 +393,8 @@ for (class in levels(actual)) {
   
   # Plot ROC
   roc_obj <- roc(binary_actual, prob_class)
-  plot(roc_obj, main = "One-vs-All ROC Curves", col = which(levels(actual) == class), add = (class != levels(actual)[1]))
+  plot(roc_obj, main = "One-vs-All ROC Curves", col = which(levels(actual) == class),
+       add = (class != levels(actual)[1]), xlim = c(1,0))
 }
 legend("bottomright", legend = levels(actual), col = 1:length(levels(actual)), lwd = 2)
 
