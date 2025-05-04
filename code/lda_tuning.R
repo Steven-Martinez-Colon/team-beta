@@ -17,7 +17,7 @@ library(moments)
 library(FactoMineR)
 library(factoextra)
 library(MASS)
-# source("code/calcSplitRatio-3.R")
+source("code/calcSplitRatio-3.R")
 library(MVN)
 library(class)
 library(randomForest)
@@ -29,7 +29,7 @@ dataset_folder <- paste(getwd(),"/final_data",sep="")
 data_file <- paste(dataset_folder,"/final_dataset.csv", sep = "")
 
 ## Read data without changing special chars in column names
-mlb_data <- read.csv("C:\\Users\\student\\Documents\\GitHub\\team-beta\\final_data\\final_dataset.csv", check.names = FALSE)
+mlb_data <- read.csv(data_file, check.names = FALSE)
 
 ############################### Clean Data #####################################
 
@@ -381,15 +381,26 @@ print(roc_multi_curve$auc)
 # Extract individual ROC curves
 roc_list <- roc_multi_curve$rocs
 
-# Plot the first curve and then add others
-plot(roc_list[[1]][[1]], col = 1, main = "Multiclass ROC Curves")
 
-# Loop through the rest and add to the plot
-for (i in 2:length(roc_list)) {
-  lines(roc_list[[i]][[1]], col = i)
+# Assuming probs is the predicted probability matrix
+# and actual is the factor of actual classes
+for (class in levels(actual)) {
+  # Create binary labels: this class vs all others
+  binary_actual <- ifelse(actual == class, 1, 0)
+  
+  # Use probabilities for the current class
+  prob_class <- probs[[class]]
+  
+  # Plot ROC
+  roc_obj <- roc(binary_actual, prob_class)
+  plot(roc_obj, main = "One-vs-All ROC Curves", col = which(levels(actual) == class), add = (class != levels(actual)[1]))
 }
+legend("bottomright", legend = levels(actual), col = 1:length(levels(actual)), lwd = 2)
 
-legend("bottomright", legend = levels(actual), col = 1:length(roc_list), lwd = 2)
+# Calculate and display AUCs for each class
+auc_values <- sapply(roc_list, function(r) auc(r[[1]]))
+names(auc_values) <- levels(actual)
+print(auc_values)
 
 
 ############################# Binary Response ##################################
@@ -549,14 +560,14 @@ print(knn_model_og)
 #############################JAMES START HERE ##################################
 
 ## change the filename HERE
-rf_data <- read.csv("C:\\Users\\student\\Documents\\GitHub\\team-beta\\images\\rf_data.csv", check.names = F, row.names = 1)
+rf_data <- read.csv("insert_filename", check.names = F, row.names = 1)
 
-rf_data$Team.Success <- ifelse(mlb_df$Team.Success == "1","0","1")
-rf_data$Team.Success <- as.factor(mlb_df$Team.Success)
+rf_data$Team.Success <- ifelse(rf_data$Team.Success == "1","0","1")
+rf_data$Team.Success <- as.factor(rf_data$Team.Success)
 
-# ratio <- getSplitRatio(rf_data)
+ratio <- getSplitRatio(rf_data)
 
-train_index <- createDataPartition(rf_data$Team.Success, p = 0.89, list = F)
+train_index <- createDataPartition(rf_data$Team.Success, p = ratio, list = F)
 
 train_data <- rf_data[train_index,]
 test_data <- rf_data[-train_index,]
