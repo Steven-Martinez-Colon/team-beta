@@ -41,6 +41,10 @@ balanced_df <- read.csv("images/rf_data.csv", row.names = 1, check.names = F)
 # Removing special characters in order to perform Random Forest
 balanced_df <- balanced_df %>% rename_with(make.names)
 
+# Changing Team Success as a factor
+#balanced_df$Team.Success <-  as.factor(balanced_df$Team.Success)
+#str(balanced_df)
+
 # Loading the calcSplitRatio function from GitHub
 source("code/calcSplitRatio-3.R")
 
@@ -193,6 +197,7 @@ ggplot(results_df_long, aes(x = Fold, y = Accuracy, color = Type)) +
   ylim(0.78, 1.0) +
   theme_minimal()
 
+
 # ____________________________________
 
 # Summarizing the predictions in order to create the confusion matrix
@@ -250,7 +255,7 @@ average_importance %>%
        y = "Mean Decrease in Accuracy") +
   theme_minimal()
 
-# ____________________________________
+# ______________ Creating Predictions on Test _______________________
 
 # Predict on test
 rf_pred <- predict(rf_model, newdata = test)
@@ -273,6 +278,60 @@ ggplot(rf_conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
        y = "Predicted",
        fill = "Count") +
   theme_minimal(base_size = 14)
+
+# ______________ ROC Curves ___________________________-
+
+## Create multiclass ROC curve
+
+# Get predicted class probabilities (not class labels)
+probs <- as.data.frame(predict(rf_model, newdata = test, type = "prob"))
+
+
+# List to store ROC data frames and AUC values
+roc_dfs <- list()
+auc_labels <- c()
+
+# Loop over each class
+for (class in levels(test$Team.Success)) {
+  # Binary response: 1 if current class, 0 otherwise
+  binary_response <- as.factor(ifelse(test$Team.Success == class, class, paste0("not_", class)))
+  
+  # Predicted probabilities for this class
+  predictor <- probs[, class]
+  
+  # Calculate ROC
+  roc_obj <- roc(binary_response, predictor)
+  
+  # Store ROC curve data
+  roc_df <- data.frame(
+    Specificity = rev(roc_obj$specificities),
+    Sensitivity = rev(roc_obj$sensitivities),
+    Class = class
+  )
+  roc_dfs[[class]] <- roc_df
+  
+  # Get AUC value and build label
+  auc_val <- auc(roc_obj)
+  auc_labels <- c(auc_labels, paste0(class, " (AUC = ", round(auc_val, 3), ")"))
+}
+
+# Combine ROC curves into one data frame
+all_roc_df <- bind_rows(roc_dfs)
+all_roc_df$Class <- factor(all_roc_df$Class, levels = levels(test$Team.Success), labels = auc_labels)
+
+# Plot with ggplot2
+ggplot(all_roc_df, aes(x = 1 - Specificity, y = Sensitivity, color = Class)) +
+  geom_line(size = 1.2) +
+  scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  labs(
+    title = "Multiclass ROC Curve (One-vs-All)",
+    x = "False Positive Rate (1 - Specificity)",
+    y = "True Positive Rate (Sensitivity)",
+    color = "Class"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "right")
 
 ################################# Random Forest with Predictors - Two classes ##############################
 
