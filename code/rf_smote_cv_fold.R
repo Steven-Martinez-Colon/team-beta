@@ -33,12 +33,8 @@ options(warnings = 0)
 
 ############################## Loading Dataset ####################################
 
-# Loading dataset
-balanced_df <- read_csv("final_data/balanced_rf_data.csv")
-
 # Loading Dataset
 balanced_df <- read.csv("images/rf_data.csv", row.names = 1, check.names = F)
-
 
 ################################# Random Forest with Predictors - 4 classes ##############################
 
@@ -60,7 +56,7 @@ train <- balanced_df[train_index, ]
 test <- balanced_df[-train_index, ]
 
 # Define your target variable
-target_var <- "Team.Success"  
+target_var <- "Team.Success"
 
 # Create stratified folds
 train$fold <- caret::createFolds(train[[target_var]], k = 10, list = FALSE)
@@ -418,7 +414,7 @@ ggplot(results_df_long, aes(x = Fold, y = Accuracy, color = Type)) +
     y = "Accuracy",
     color = "Accuracy Type"
   ) +
-  ylim(0.9, 1.0) +
+  ylim(0.89, 1.0) +
   theme_minimal()
 
 # ____________________________________
