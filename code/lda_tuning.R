@@ -368,40 +368,53 @@ ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
 # Get predicted class probabilities (not class labels)
 probs <- predict(knn_model_multi, newdata = test_data, type = "prob")
 
-# Actual test labels
-actual <- test_data$Team.Success
 
-# Compute multiclass ROC
-roc_multi_curve <- multiclass.roc(actual, probs)
-# Print multiclass AUC (macro average)
-print(roc_multi_curve$auc)
+# List to store ROC data frames and AUC values
+roc_dfs <- list()
+auc_labels <- c()
 
-## Plot ROC curves for each class
-
-# Extract individual ROC curves
-roc_list <- roc_multi_curve$rocs
-
-
-# Assuming probs is the predicted probability matrix
-# and actual is the factor of actual classes
-for (class in levels(actual)) {
-  # Create binary labels: this class vs all others
-  binary_actual <- ifelse(actual == class, 1, 0)
+# Loop over each class
+for (class in levels(test_data$Team.Success)) {
+  # Binary response: 1 if current class, 0 otherwise
+  binary_response <- as.factor(ifelse(test_data$Team.Success == class, class, paste0("not_", class)))
   
-  # Use probabilities for the current class
-  prob_class <- probs[[class]]
+  # Predicted probabilities for this class
+  predictor <- probs[, class]
   
-  # Plot ROC
-  roc_obj <- roc(binary_actual, prob_class)
-  plot(roc_obj, main = "One-vs-All ROC Curves", col = which(levels(actual) == class),
-       add = (class != levels(actual)[1]), xlim = c(1,0))
+  # Calculate ROC
+  roc_obj <- roc(binary_response, predictor)
+  
+  # Store ROC curve data
+  roc_df <- data.frame(
+    Specificity = rev(roc_obj$specificities),
+    Sensitivity = rev(roc_obj$sensitivities),
+    Class = class
+  )
+  roc_dfs[[class]] <- roc_df
+  
+  # Get AUC value and build label
+  auc_val <- auc(roc_obj)
+  auc_labels <- c(auc_labels, paste0(class, " (AUC = ", round(auc_val, 3), ")"))
 }
-legend("bottomright", legend = levels(actual), col = 1:length(levels(actual)), lwd = 2)
 
-# Calculate and display AUCs for each class
-auc_values <- sapply(roc_list, function(r) auc(r[[1]]))
-names(auc_values) <- levels(actual)
-print(auc_values)
+# Combine ROC curves into one data frame
+all_roc_df <- bind_rows(roc_dfs)
+all_roc_df$Class <- factor(all_roc_df$Class, levels = levels(test_data$Team.Success), labels = auc_labels)
+
+# Plot with ggplot2
+ggplot(all_roc_df, aes(x = 1 - Specificity, y = Sensitivity, color = Class)) +
+  geom_line(size = 1.2) +
+  scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  labs(
+    title = "Multiclass ROC Curve (One-vs-All)",
+    x = "False Positive Rate (1 - Specificity)",
+    y = "True Positive Rate (Sensitivity)",
+    color = "Class"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "right")
+
 
 
 ############################# Binary Response ##################################
@@ -511,6 +524,57 @@ ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
   theme_minimal(base_size = 14)
 
 
+## Create multiclass ROC curve
+
+# Get predicted class probabilities (not class labels)
+probs <- predict(knn_model_binary, newdata = test_data, type = "prob")
+
+
+# List to store ROC data frames and AUC values
+roc_dfs <- list()
+auc_labels <- c()
+
+# Loop over each class
+for (class in levels(test_data$Team.Success)) {
+  # Binary response: 1 if current class, 0 otherwise
+  binary_response <- as.factor(ifelse(test_data$Team.Success == class, class, paste0("not_", class)))
+  
+  # Predicted probabilities for this class
+  predictor <- probs[, class]
+  
+  # Calculate ROC
+  roc_obj <- roc(binary_response, predictor)
+  
+  # Store ROC curve data
+  roc_df <- data.frame(
+    Specificity = rev(roc_obj$specificities),
+    Sensitivity = rev(roc_obj$sensitivities),
+    Class = class
+  )
+  roc_dfs[[class]] <- roc_df
+  
+  # Get AUC value and build label
+  auc_val <- auc(roc_obj)
+  auc_labels <- c(auc_labels, paste0(class, " (AUC = ", round(auc_val, 3), ")"))
+}
+
+# Combine ROC curves into one data frame
+all_roc_df <- bind_rows(roc_dfs)
+all_roc_df$Class <- factor(all_roc_df$Class, levels = levels(test_data$Team.Success), labels = auc_labels)
+
+# Plot with ggplot2
+ggplot(all_roc_df, aes(x = 1 - Specificity, y = Sensitivity, color = Class)) +
+  geom_line(size = 1.2) +
+  scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
+  labs(
+    title = "Multiclass ROC Curve (One-vs-All)",
+    x = "False Positive Rate (1 - Specificity)",
+    y = "True Positive Rate (Sensitivity)",
+    color = "Class"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "right")
 
 
 
