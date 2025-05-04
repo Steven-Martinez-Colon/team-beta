@@ -21,6 +21,7 @@ source("code/calcSplitRatio-3.R")
 library(MVN)
 library(class)
 library(randomForest)
+library(pROC)
 
 
 dataset_folder <- paste(getwd(),"/final_data",sep="")
@@ -362,6 +363,35 @@ ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
        fill = "Count") +
   theme_minimal(base_size = 14)
 
+## Create multiclass ROC curve
+
+# Get predicted class probabilities (not class labels)
+probs <- predict(knn_model_multi, newdata = test_data, type = "prob")
+
+# Actual test labels
+actual <- test_data$Team.Success
+
+# Compute multiclass ROC
+roc_multi_curve <- multiclass.roc(actual, probs)
+# Print multiclass AUC (macro average)
+print(roc_multi_curve$auc)
+
+## Plot ROC curves for each class
+
+# Extract individual ROC curves
+roc_list <- roc_multi_curve$rocs
+
+# Plot the first curve and then add others
+plot(roc_list[[1]][[1]], col = 1, main = "Multiclass ROC Curves")
+
+# Loop through the rest and add to the plot
+for (i in 2:length(roc_list)) {
+  lines(roc_list[[i]][[1]], col = i)
+}
+
+legend("bottomright", legend = levels(actual), col = 1:length(roc_list), lwd = 2)
+
+
 ############################# Binary Response ##################################
 
 ## Binary category response LDA
@@ -467,6 +497,11 @@ ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
        y = "Predicted",
        fill = "Count") +
   theme_minimal(base_size = 14)
+
+
+
+
+
 
 ########################## Original Predictor data #############################
 
