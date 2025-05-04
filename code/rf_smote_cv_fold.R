@@ -249,11 +249,16 @@ average_importance %>%
   top_n(10, wt = MeanDecreaseAccuracy) %>%
   ggplot(aes(x = reorder(Variable, MeanDecreaseAccuracy), y = MeanDecreaseAccuracy)) +
   geom_col(fill = "steelblue") +
+  geom_text(aes(label = round(MeanDecreaseAccuracy, 1)), 
+            hjust = -0.1, size = 4, fontface = "bold") +  # Labels just outside bars
   coord_flip() +
   labs(title = "Top 10 Most Important Variables (Cross-Validated)",
        x = "Variable",
        y = "Mean Decrease in Accuracy") +
-  theme_minimal()
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(face = "bold")) +
+  expand_limits(y = max(average_importance$MeanDecreaseAccuracy) * 1.1)  # Ensure space for text
+
 
 # ______________ Creating Predictions on Test _______________________
 
@@ -527,11 +532,15 @@ average_importance %>%
   top_n(10, wt = MeanDecreaseAccuracy) %>%
   ggplot(aes(x = reorder(Variable, MeanDecreaseAccuracy), y = MeanDecreaseAccuracy)) +
   geom_col(fill = "steelblue") +
+  geom_text(aes(label = round(MeanDecreaseAccuracy, 1)), 
+            hjust = -0.1, size = 4, fontface = "bold") +  # Labels just outside bars
   coord_flip() +
   labs(title = "Top 10 Most Important Variables (Cross-Validated)",
        x = "Variable",
        y = "Mean Decrease in Accuracy") +
-  theme_minimal()
+  theme_minimal(base_size = 14) +
+  theme(plot.title = element_text(face = "bold")) +
+  expand_limits(y = max(average_importance$MeanDecreaseAccuracy) * 1.1)  # Ensure space for text
 
 # ____________ Prediction on Test Set ________________________
 
