@@ -533,7 +533,7 @@ average_importance %>%
        y = "Mean Decrease in Accuracy") +
   theme_minimal()
 
-# ____________________________________
+# ____________ Prediction on Test Set ________________________
 
 # Predict on test
 rf_pred <- predict(rf_model, newdata = test)
@@ -557,7 +557,40 @@ ggplot(rf_conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
        fill = "Count") +
   theme_minimal(base_size = 14)
 
+# __________________ ROC Curve on Test Set __________________
 
+# Predict probabilities for the positive class
+rf_probs <- predict(rf_model, newdata = test, type = "prob")
+positive_class_probs <- rf_probs[, "1"]  # '1' = made playoffs
+
+# Actual labels
+actual <- test$Team.Success
+
+# Compute ROC curve using pROC
+roc_obj <- pROC::roc(actual, positive_class_probs)
+
+# Extract AUC
+auc_val <- pROC::auc(roc_obj)
+
+# Create dataframe for ggplot
+roc_df <- data.frame(
+  Specificity = rev(roc_obj$specificities),
+  Sensitivity = rev(roc_obj$sensitivities),
+  FPR = 1 - rev(roc_obj$specificities),
+  TPR = rev(roc_obj$sensitivities)
+)
+
+# Plot with ggplot2
+ggplot(roc_df, aes(x = FPR, y = TPR)) +
+  geom_line(color = "#2c7fb8", size = 1.2) +
+  geom_abline(linetype = "dashed", color = "gray50") +
+  labs(
+    title = paste("ROC Curve for Binary Random Forest Model"),
+    subtitle = paste("AUC =", round(auc_val, 3)),
+    x = "False Positive Rate (1 - Specificity)",
+    y = "True Positive Rate (Sensitivity)"
+  ) +
+  theme_minimal(base_size = 14)
 
 
 
