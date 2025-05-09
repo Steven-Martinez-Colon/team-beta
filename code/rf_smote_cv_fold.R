@@ -338,6 +338,7 @@ ggplot(all_roc_df, aes(x = 1 - Specificity, y = Sensitivity, color = Class)) +
   theme_minimal(base_size = 14) +
   theme(legend.position = "right")
 
+
 ################################# Random Forest with Predictors - Two classes ##############################
 
 # Loading dataset
