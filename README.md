@@ -24,3 +24,43 @@ Specific offensive and defensive statistics as well as additional information re
 Certain offensive and defensive statistics, like On-base percentage (OBP) and Walks and hits per innings pitched (WHIP), that represent a team’s ability to create scoring opportunities or prevent the opposing team from creating scoring opportunities will be most influential in predicting a team’s outcome for the season. Other statistics, like batting average and home runs, that reflect individual player ability will be less influential in the model.
 
 ## Data and Methods
+
+### Dataset:
+
+### Response/Outcome Variable
+
+### Predictor Variables:
+
+## Analysis Plan
+
+### Data Cleaning:
+
+### Predictive Modeling:
+
+## What will indicate if the question is answered and the hypothesis supported?
+
+## Instructions for running the code
+
+### Custom Function
+
+### Troubleshooting and Recommendations 
+
+## Team Duties and Work on Project
+All group members were involved in writing code and writing the final report. Individuals wrote much of the code separately but came together to review the code weekly where constructive feedback was given and ensured the code was running properly after all commits on all group members computers. All files were tested by all group members and ran without issue. The group members initials are present next to each section of code to indicate who wrote each part. These initials indicate the delegated section assignments.
+
+## References
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
