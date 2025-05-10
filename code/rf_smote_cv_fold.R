@@ -34,7 +34,7 @@ options(warnings = 0)
 ############################## Loading Dataset ####################################
 
 # Loading Dataset
-balanced_df <- read.csv("images/rf_data.csv", row.names = 1, check.names = F)
+balanced_df <- read.csv("final_data/rf_data.csv", row.names = 1, check.names = F)
 
 ################################# Random Forest with Predictors - 4 classes ##############################
 
@@ -342,7 +342,7 @@ ggplot(all_roc_df, aes(x = 1 - Specificity, y = Sensitivity, color = Class)) +
 ################################# Random Forest with Predictors - Two classes ##############################
 
 # Loading dataset
-binary_balanced_df <- read.csv("images/rf_data.csv", row.names = 1, check.names = F)
+binary_balanced_df <- read.csv("final_data/rf_data.csv", row.names = 1, check.names = F)
 
 # Removing special characters in order to perform Random Forest
 binary_balanced_df <- binary_balanced_df %>% rename_with(make.names)
