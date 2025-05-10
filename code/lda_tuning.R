@@ -403,6 +403,7 @@ all_roc_df$Class <- factor(all_roc_df$Class, levels = levels(test_data$Team.Succ
 
 # Plot with ggplot2
 ggplot(all_roc_df, aes(x = 1 - Specificity, y = Sensitivity, color = Class)) +
+  geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed") +
   geom_line(size = 1.2) +
   scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
   scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
@@ -564,21 +565,21 @@ all_roc_df <- bind_rows(roc_dfs)
 all_roc_df$Class <- factor(all_roc_df$Class, levels = levels(test_data$Team.Success), labels = auc_labels)
 
 # Plot with ggplot2
-ggplot(all_roc_df, aes(x = 1 - Specificity, y = Sensitivity, color = Class)) +
+ggplot(all_roc_df %>% filter(Class == "made_po (AUC = 0.973)"),
+       aes(x = 1 - Specificity, y = Sensitivity, color = Class)) +
+  geom_abline(intercept = 0, slope = 1, color = "black", linetype = "dashed") +
   geom_line(size = 1.2) +
   scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
   scale_y_continuous(limits = c(0, 1), expand = c(0, 0)) +
   labs(
-    title = "ROC Curve (One-vs-All)",
+    title = "ROC Curve",
     subtitle = "Binary kNN with LDA results",
     x = "False Positive Rate (1 - Specificity)",
-    y = "True Positive Rate (Sensitivity)",
-    color = "Class"
+    y = "True Positive Rate (Sensitivity)"
   ) +
   theme_minimal(base_size = 14) +
-  theme(legend.position = "right")
-
-
+  theme(legend.position = "none") +
+  annotate(geom = "text", x=0.25, y=0.75, label = "AUC = 0.973")
 
 
 ########################## Original Predictor data #############################
