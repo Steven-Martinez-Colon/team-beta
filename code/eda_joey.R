@@ -14,11 +14,7 @@ library(ggcorrplot)
 library(caret)
 library(moments)
 
-dataset_folder <- paste(getwd(),"/final_data",sep="")
-
-data_file <- paste(dataset_folder,"/final_dataset.csv", sep = "")
-
-mlb_data <- read.csv(data_file, check.names = FALSE)
+mlb_data <- read.csv("final_data/final_dataset.csv", check.names = FALSE)
 
 ################################################################################
 
