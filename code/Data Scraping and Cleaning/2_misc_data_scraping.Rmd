@@ -55,7 +55,7 @@ for (year in 2000:2024) {
 misc_data <- bind_rows(misc_data_list)
 
 # Save the data to a CSV file
-write.csv(misc_data, "Team_Misc_2000_2024.csv", row.names = FALSE)
+write.csv(misc_data, "datasets/Team_Misc_2000_2024.csv", row.names = FALSE)
 
 
 ```

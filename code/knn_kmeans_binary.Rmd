@@ -5,6 +5,8 @@ date: "2025-04-17"
 output: html_document
 ---
 
+In this Markdown document, PCA is performed on the final data set. Then, two k-Nearest Neighbor models are trained and tested. The first uses the principal components from PCA as predictor variables and the binary Team Success response variable. The second uses the same predictors as well as results from k-means clustering.
+
 # Loading Library Functions (from Steven Martinez)
 
 ```{R}

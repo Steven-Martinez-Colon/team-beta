@@ -46,6 +46,8 @@ summary_table <- data.frame(
   Percentage = round(as.vector(percent_table), 2)
 )
 
+################## Adjusting Payroll variables for Inflation ###################
+
 ## Create dataframe of CPI values for 2000-2024
 ## https://www.usinflationcalculator.com/inflation/consumer-price-index-and-annual-percent-changes-from-1913-to-2008/
 cpi_table <- data.frame(
@@ -92,28 +94,17 @@ num_cols <- names(mlb_data)[sapply(mlb_data, is.numeric)]
 mlb_df <- mlb_data %>% dplyr::select(all_of(num_cols)) %>% mutate(Team.Success = mlb_data$Team.Success)
 
 
-############################### Split Data #####################################
-
-## Calculate ideal train:test split ratio for PCA scores data
-ratio <- calcSplitRatio(df = mlb_df) ## 0.78:0.22
-
-
-############################### Encoding #######################################
-
-
-
-###################### Imputation of Missing Values  ###########################
-
-
-
 ###################### Perform Arithmetic Transformation #######################
 
 transform_mlb <- mlb_df
 
+## Calculate p-values from Shapiro-Wilks tests for each numeric predictor
 shapiro_pvalues <- sapply(transform_mlb %>% dplyr::select(all_of(num_cols)), function (col) {
   shapiro.test(col)$p.value
 })
 
+## Store p-values in data frame along with their corresponding predictor 
+## variable names
 shapiro_results <- data.frame(
   Variable = names(shapiro_pvalues),
   P_Value = shapiro_pvalues
@@ -151,17 +142,11 @@ for (colname in non_normal_cols) {
 View(transform_mlb)
 
 
-###################### Normalize, center, and/or scale #########################
-
-
-
 ################################# PCA ##########################################
 
 ## https://www.datacamp.com/tutorial/pca-analysis-r
 ## https://bryanhanson.github.io/LearnPCA/articles/Vig_07_Functions_PCA.html
 
-## normalize numeric data
-# scaled_data <- scale(mlb_data)
 
 ## Create dataset for PCA
 pca_mlb_data <- transform_mlb %>% dplyr::select(all_of(num_cols))
@@ -173,7 +158,7 @@ summary(data.pca)
 ## View loadings
 View(data.pca$loadings[,1:75])
 
-## Scree plot
+## Scree plot for PCA
 scree_plot <- fviz_eig(data.pca, addlabels = T, ncp = 20)
 scree_plot
 
