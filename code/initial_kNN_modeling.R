@@ -20,12 +20,8 @@ library(MVN)
 library(class)
 library(randomForest)
 
-dataset_folder <- paste(getwd(),"/final_data",sep="")
-
-data_file <- paste(dataset_folder,"/final_dataset.csv", sep = "")
-
 ## Read data without changing special chars in column names
-mlb_data <- read.csv(data_file, check.names = FALSE)
+mlb_data <- read.csv("final_data/final_dataset.csv", check.names = FALSE)
 
 ############################### Clean Data #####################################
 
@@ -148,14 +144,13 @@ findCorrelatedSets <- function(df, threshold=0.9) {
 }
 
 
-
-# # Export high_corr_sets to text file
-# sink("images/highly_correlated_sets.txt")
-# for (i in seq_along(findCorrelatedSets(mlb_df))) {
-#   cat(paste0("Set ", i, ":\n"))
-#   cat(paste(high_corr_sets[[i]], collapse = ", "), "\n\n")
-# }
-# sink()
+# Export high_corr_sets to text file
+sink("images/highly_correlated_sets.txt")
+for (i in seq_along(findCorrelatedSets(mlb_df))) {
+  cat(paste0("Set ", i, ":\n"))
+  cat(paste(high_corr_sets[[i]], collapse = ", "), "\n\n")
+}
+sink()
 
 ####################### Remove duplicates and highly cor var ###################
 
@@ -272,6 +267,14 @@ for (colname in non_normal_cols) {
 
 mlb_df <- transform_mlb
 
+######################## Create data set for Random Forest #####################
+
+## Add Team Success back to data frame
+mlb_df$Team.Success <- mlb_data$Team.Success
+
+## Export data set before applying LDA for Random Forest model
+write.csv(mlb_df, file = "final_data/rf_data.csv")
+
 ############################## LDA Assumptions #################################
 
 
@@ -282,11 +285,6 @@ mvn_result$multivariateNormality
 
 ############################### Four Category ##################################
 
-## Add Team Success back to data frame
-mlb_df$Team.Success <- mlb_data$Team.Success
-
-write.csv(mlb_df, file = "images/rf_data.csv")
-
 ## Four category response LDA
 lda_model_4 <- lda(Team.Success ~ ., data = mlb_df[,-c(32,33)])
 lda_values_4 <- predict(lda_model_4)$x
@@ -294,15 +292,6 @@ lda_values_4 <- predict(lda_model_4)$x
 
 mlb_lda_4 <- as.data.frame(lda_values_4)
 mlb_lda_4$Team.Success <- mlb_df$Team.Success
-# mlb_lda_4$Year <- substr(rownames(mlb_lda_4), nchar(rownames(mlb_lda_4)) - 3,
-#                         nchar(rownames(mlb_lda_4)))
-
-## Train-test split
-# time_slices <- createTimeSlices(1:nrow(mlb_df),
-#                                 initialWindow = floor(0.8 * nrow(mlb_df)),
-#                                 horizon = 0)
-
-## Split data into training (80%) and testing (20%) sets
 
 # Set the seed for reproducibility
 set.seed(123)
@@ -314,7 +303,7 @@ train_index <- createDataPartition(mlb_lda_4$Team.Success, p = 0.8, list = FALSE
 
 # Split the data into training and test sets
 train_data <- mlb_lda_4[train_index, ]
-test_data <- mlb_lda_2[-train_index, ]
+test_data <- mlb_lda_4[-train_index, ]
 
 # Define the predictor variables (excluding the response variable)
 train_x <- train_data %>% dplyr::select(-Team.Success)
@@ -591,30 +580,3 @@ ggplot(conf_df, aes(x = Actual, y = Predicted, fill = Freq)) +
        y = "Predicted",
        fill = "Count") +
   theme_minimal(base_size = 14)
-
-
-################################# Random Forest ################################
-
-rf_data <- read.csv("images/rf_data.csv", row.names = 1)
-
-set.seed(101)
-
-# Create stratified train-test split (80% training, 20% test)
-train_index <- createDataPartition(rf_data$Team.Success, p = 0.8, list = FALSE)
-
-# Split the data into training and test sets
-train_data <- rf_data[train_index, ]
-test_data <- rf_data[-train_index, ]
-
-# Define the predictor variables (excluding the response variable)
-train_x <- train_data %>% dplyr::select(-Team.Success)
-train_y <- train_data$Team.Success
-
-# Define the predictor variables for the test set
-test_x <- test_data %>% dplyr::select(-Team.Success)
-test_y <- test_data$Team.Success
-
-rf_model <- randomForest(Team.Success ~ ., data = train_data, ntree = 500)
-
-
-#####

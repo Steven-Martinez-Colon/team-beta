@@ -21,11 +21,13 @@ mlb_data <- read.csv("final_data/final_dataset.csv", check.names = FALSE)
 mlb_data$Year <- as.factor(mlb_data$Year)
 mlb_data$Team.Success <- as.factor(mlb_data$Team.Success)
 
-numeric_mlb_cols <- names(mlb_data)[sapply(mlb_data, is.numeric)]
-
+## Get list of columns without NA values
 cols_without_na <- names(mlb_data)[sapply(mlb_data, function(x) !any(is.na(x)))]
 
+## Create new df without columns with NA values
 cor_data <- mlb_data %>% select(cols_without_na)
+
+## Get vector of column names for numeric columns
 num_cor_cols <- names(cor_data)[sapply(cor_data, is.numeric)]
 
 ################################################################################
@@ -48,23 +50,26 @@ rhc_cor_matrix <- cor(remove_high_corr %>% select(any_of(num_cor_cols)),
 
 rhc_corrplot <- corrplot::corrplot(rhc_cor_matrix, method = "color", tl.cex = 0.6, tl.pos = "n")
 
+############################## PCA Corrplot ####################################
 
-################################################################################
-
+## Most important predictors identified from PCA analysis
 pca_cols <- c("sbm.RC","sb.TB","sb.R","sb.RBI","sb.H","sb.LOB","pvb.PA","sp.L","sp.W-L%",
               "pvp.R","sp.R","ap.RE24","sp.ER","pvb.WAA","pvp.RA9","sp.ERA","ap.OPS","sp.RA/G",
               "tf.RA/G","sp.FIP","ap.SLG","sp.#P","tf.#Fld","sb.#Bat","ab.SO%","sb.SO","sb.SH","sbm.lgBA")
 
+## Correlation matrix for PCA predictors
 cor_matrix <- cor(cor_data %>% select(all_of(pca_cols)), use = "pairwise.complete.obs")
 
+## Create correlation plot for PCA predictors to identify multicollinearity
 pca_corrplot <- corrplot(cor_matrix, method = "color", tl.cex = 0.6, tl.col = "black")
 
 pca_cols <- c("Tm","Year","Team.Success",pca_cols)
 pca_data <- cor_data %>% select(all_of(pca_cols))
 
-################################################################################
+############################# Summary Statistics ###############################
 
-freq_table <- table(pca_data$Team.Success)                # Frequency count
+## Create frequency table of Team Success 
+freq_table <- table(pca_data$Team.Success)     # Frequency count
 percent_table <- prop.table(freq_table) * 100  # Convert to percentages
 
 # Combine into a single data frame
@@ -76,7 +81,7 @@ summary_table <- data.frame(
 
 print(summary_table)
 
-write_csv(summary_table, paste(getwd(),"/images/summary_table.csv", sep=""))
+write_csv(summary_table, "tables/summary_table.csv")
 
 # Example: response is your response variable (factor or integer), and df is your data frame
 summary_stats <- pca_data %>%
@@ -92,19 +97,19 @@ summary_stats <- pca_data %>%
   pivot_longer(-Team.Success, names_to = c("Variable", "Statistic"), names_sep = "_") %>%
   pivot_wider(names_from = Statistic, values_from = value)
 
-write.csv(summary_stats, paste(getwd(),"/images/summary_stats.csv", sep=""))
+write.csv(summary_stats, "tables/summary_stats.csv")
 
 ############## Debugging standard deviation is zero error from cor() ###########
 
-zero_sd_cols <- sapply(mlb_data, function(x) is.numeric(x) && sd(x, na.rm = TRUE) == 0)
-names(mlb_data)[zero_sd_cols]
-
-
-bad_cols <- sapply(mlb_data, function(x) is.numeric(x) && length(unique(na.omit(x))) <= 1)
-names(mlb_data)[bad_cols]
-
-
-col_sd <- apply(mlb_data[,numeric_cols], 2, function(x) sd(x, na.rm = TRUE))
-
-View(data.frame(column = numeric_cols,
-                sd = col_sd))
+# zero_sd_cols <- sapply(mlb_data, function(x) is.numeric(x) && sd(x, na.rm = TRUE) == 0)
+# names(mlb_data)[zero_sd_cols]
+# 
+# 
+# bad_cols <- sapply(mlb_data, function(x) is.numeric(x) && length(unique(na.omit(x))) <= 1)
+# names(mlb_data)[bad_cols]
+# 
+# 
+# col_sd <- apply(mlb_data[,numeric_cols], 2, function(x) sd(x, na.rm = TRUE))
+# 
+# View(data.frame(column = numeric_cols,
+#                 sd = col_sd))

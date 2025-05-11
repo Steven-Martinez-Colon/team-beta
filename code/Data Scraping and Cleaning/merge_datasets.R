@@ -47,14 +47,16 @@ for (i in 1:length(csv_list)) {
 }
 
 
-################################################################################
+############################ Export all data set ###############################
 
+## Join CSV files together
 full_dataset <- csv_list %>% reduce(full_join, by =c("Tm","Year"))
 
-response_file <- paste(getwd(),"/datasets/Team Success Variable Data - Sheet1.csv", sep="")
+## Load in response variable data
+response_data <- read.csv("response/Team Success Variable Data - Sheet1.csv")
 
-response_data <- read.csv(response_file)
-
+## Join response variable with predictors data
 full_dataset <- full_join(full_dataset,response_data, by=c("Tm", "Year"))
 
-write.csv(full_dataset, paste(dataset_folder,"/all_data.csv", sep=""))
+## Export data set as CSV file
+write.csv(full_dataset, "cleaned_data/all_data.csv")
