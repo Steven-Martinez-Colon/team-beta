@@ -49,13 +49,17 @@ Certain offensive and defensive statistics, like On-base percentage (OBP) and Wa
 All group members were involved in writing code and writing the final report. Individuals wrote much of the code separately but came together to review the code weekly where constructive feedback was given and ensured the code was running properly after all commits on all group members computers. All files were tested by all group members and ran without issue. The group members initials are present next to each section of code to indicate who wrote each part. These initials indicate the delegated section assignments.
 
 ## References
-
-
-
-
-
-
-
+Ramy Elitzur,
+Data analytics effects in major league baseball,
+Omega,
+Volume 90,
+2020,
+102001,
+ISSN 0305-0483,
+https://doi.org/10.1016/j.omega.2018.11.010.
+(https://www.sciencedirect.com/science/article/pii/S0305048318300215)
+Abstract: The use of data analytics has enjoyed resurgence over the last two decades in professional sports, businesses, and the government. This resurgence is attributable to Moneyball, which exposed readers to the use of advanced baseball analytics by the Oakland Athletics, and how it has resulted in improved player selection and game management. Moreover, it changed managerial vocabulary, as the term “Moneyballing” now commonly describes organizations that use data analytics. The first research question that this study examines is whether the organizational knowledge related to baseball data analytics has provided any advantage in the competitive Major League Baseball (MLB) marketplace. The second research question is whether this strategic advantage can be sustained once this proprietary organizational knowledge becomes public. First, I identify “Moneyball” teams and executives, i.e., those who rely on baseball data analytics, and track their pay/performance over time. Next, using econometric models, I analyze whether these “Moneyball” teams and GMs, have enjoyed a pay-performance advantage over the rest of MLB, and whether this advantage persists after the information becomes public.
+Keywords: Data analytics; Moneyball; OR in sports; Empirical analysis; Information; Major league baseball
 
 
 
