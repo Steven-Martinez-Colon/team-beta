@@ -27,13 +27,13 @@ Certain offensive and defensive statistics, like On-base percentage (OBP) and Wa
 ## Data and Methods
 
 ### Dataset:
-The data that was used was taken from a very accurate baseball statistics website called [Baseball Reference](https://www.baseball-reference.com). There were nine different datasets that were taken from this website, and these datasets were: standard batting data, standard pitching data, standard fielding data, player value data for batting and pitching, advanced batting and pitching statistics, sabermetrics data, and miscellaneous data. 
+The data that was used was taken from a very accurate baseball statistics website called [Baseball Reference](https://www.baseball-reference.com). There were nine different datasets that were taken from this website, and these datasets were: standard batting data, standard pitching data, standard fielding data, player value data for batting and pitching, advanced batting and pitching statistics, sabermetrics data, and miscellaneous data. To extract this data from Baseball Reference, a custom function was created. The function can be found in the R `script scraping_baseball_data.R`.
 
 ### Data Dictionary:
 Click on the following link to access the [Data Dictionary](https://docs.google.com/spreadsheets/d/1CIF_PlHCG6iH3jl4aIAVXccJDVC2CTumdDulyaqLHo0/edit?usp=sharing) and learn about each variable.
 
 ### Response/Outcome Variable:
-A multi-class team success variable was created that represented how each team performed each year, and the different classes included missing the playoffs (1), making the playoffs and not going to the World Series (2), losing in the World Series (3), and winning the World Series (4).
+A multi-class `team success` variable was created that represented how each team performed each year, and the different classes included missing the playoffs (1), making the playoffs and not going to the World Series (2), losing in the World Series (3), and winning the World Series (4).
 
 ### Predictor Variables:
 
