@@ -6,16 +6,17 @@
 
 Each year millions of people participate in sports betting with the number of  users of popular sports betting websites, like FanDuel, growing each year (Statista Research Department, 2024). Bettors are able to put money on the line when predicting which teams will make the playoffs and win championships. Baseball is one of the oldest sports that has been consistently played at the professional level. The World Series, the championship series for Major League Baseball, has been played since 1903. Since before then, statistics for player and team performance have been recorded (National Baseball Hall of Fame). In recent years, advanced metrics for baseball have become popular and are readily available with MLB Statcast.  Bettors and analysts can use this available data to inform various predictions ranging from the achievements of specific players to teams’ regular season win-loss records. 
 
-Leveraging this data in a meaningful yet simple way could be invaluable to sports bettors, analysts, teams, and fans. In this project, the following question will be explored: Can specific characteristics of winning teams be identified to help predict if an MLB team will make the playoffs, win the league pennant, or win the World Series?
+In this project, the following question will be explored: Can specific characteristics of winning teams be identified to help predict if an MLB team will make the playoffs, win the league pennant, or win the World Series?
 
+In order to predict the outcome for an MLB team in a given season, two classification models were created. The first model is more specific in its predictions by distinguishing between teams that miss the playoffs, make the playoffs but not the World Series, lose in the World Series, and win the World Series. The second model is excellent at predicting if a team will make the playoffs or not while also providing specific team statistics that are most important in deciding if a team will succeed.
 
 ## Background & Question
 
 ### Research Question
+Can MLB team segments, derived from offensive and defensive statistics, help predict whether an MLB team will make the playoffs, win the league pennant, or win the World Series?
 
 ### Why is it worth exploring?
-
-### Is the question Nover or Original?
+Leveraging this data in a meaningful yet simple way could be invaluable to sports bettors, analysts, teams, and fans. Bettors can use this model to guide their betting decisions. Analysts can use it to inform their predictions on team success. Team organizations can use the information to learn which team attributes are most influential in successful MLB teams and find talent that positively impacts those attributes. For these reasons, in this project, segmentation analysis and predictive modeling are explored to create a method for predicting MLB team success in a given season.
 
 ### Hypothesis:
 Specific offensive and defensive statistics as well as additional information regarding payroll management and home game ticket sales will contribute to accurate classification of teams by their success because statistics are indicators of overall team ability and team morale.
@@ -27,7 +28,8 @@ Certain offensive and defensive statistics, like On-base percentage (OBP) and Wa
 
 ### Dataset:
 
-### Response/Outcome Variable
+### Response/Outcome Variable:
+A multi-class team success variable was created that represented how each team performed each year, and the different classes included missing the playoffs (1), making the playoffs and not going to the World Series (2), losing in the World Series (3), and winning the World Series (4).
 
 ### Predictor Variables:
 
