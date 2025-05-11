@@ -49,7 +49,10 @@ A multi-class `team success` variable was created that represented how each team
 
 ### Custom Function
 
-### Troubleshooting and Recommendations 
+### Troubleshooting and Recommendations
+During the analysis, users may encounter missing package errors or file path issues. To resolve these, ensure all required R packages are installed and that dataset files are placed in the correct directories. For additional support, refer to the R manual for troubleshooting R-specific issues.
+
+It is recommended that the next steps for this project include the following actions. Initially, an exploratory analysis of the current models’ incorrect predictions across time should be performed to identify bias related to time. If that is observed, a time-aware cross-validation should be employed during training to correct the bias. Additionally, a more objective approach to feature selection of collinear variables should be performed to identify if using different subsets of predictors yields significantly different model results. The kNN model using LDA had the disadvantage of having less interpretability than the Random Forest. The team should explore ways to extract feature importance from LDA results. Ultimately, the models should be tested using 2025 season data, then the models can be evaluated by comparing its predictions for this season to the outcome in October of this year.
 
 ## Team Duties and Work on Project
 All group members were involved in writing code and writing the final report. Individuals wrote much of the code separately but came together to review the code weekly where constructive feedback was given and ensured the code was running properly after all commits on all group members computers. All files were tested by all group members and ran without issue. The group members initials are present next to each section of code to indicate who wrote each part. These initials indicate the delegated section assignments.
