@@ -58,6 +58,7 @@ Volume 90,
 ISSN 0305-0483,
 https://doi.org/10.1016/j.omega.2018.11.010.
 (https://www.sciencedirect.com/science/article/pii/S0305048318300215)
+
 Abstract: The use of data analytics has enjoyed resurgence over the last two decades in professional sports, businesses, and the government. This resurgence is attributable to Moneyball, which exposed readers to the use of advanced baseball analytics by the Oakland Athletics, and how it has resulted in improved player selection and game management. Moreover, it changed managerial vocabulary, as the term “Moneyballing” now commonly describes organizations that use data analytics. The first research question that this study examines is whether the organizational knowledge related to baseball data analytics has provided any advantage in the competitive Major League Baseball (MLB) marketplace. The second research question is whether this strategic advantage can be sustained once this proprietary organizational knowledge becomes public. First, I identify “Moneyball” teams and executives, i.e., those who rely on baseball data analytics, and track their pay/performance over time. Next, using econometric models, I analyze whether these “Moneyball” teams and GMs, have enjoyed a pay-performance advantage over the rest of MLB, and whether this advantage persists after the information becomes public.
 Keywords: Data analytics; Moneyball; OR in sports; Empirical analysis; Information; Major league baseball
 
