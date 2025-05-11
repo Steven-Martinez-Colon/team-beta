@@ -100,7 +100,7 @@ confusionMatrix(pred, actual)
 
 ```{R}
 # Load Data
-rf_data <- read.csv("C:/Users/janna/Documents/Merrimack MSDS/team-beta/images/rf_data.csv", check.names = F, row.names = 1)
+rf_data <- read.csv("final_data/rf_data.csv", check.names = F, row.names = 1)
 
 rf_data$Team.Success <- as.factor(rf_data$Team.Success)
 

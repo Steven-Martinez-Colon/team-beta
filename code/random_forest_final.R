@@ -46,7 +46,7 @@ balanced_df <- balanced_df %>% rename_with(make.names)
 #str(balanced_df)
 
 # Loading the calcSplitRatio function from GitHub
-source("code/calcSplitRatio-3.R")
+source("code/Supplementary Code/calcSplitRatio-3.R")
 
 # Finding the ideal split ratio
 calcSplitRatio(p = 78, balanced_df) # Split data into training (89%) and testing (11%) sets
