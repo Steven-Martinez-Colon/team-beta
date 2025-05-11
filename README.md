@@ -47,6 +47,8 @@ A multi-class `team success` variable was created that represented how each team
 
 ## Instructions for running the code
 
+All essential scripts are written in R. Set the working directory for your session to the repository. The code for the final k-Nearest Neighbor and Random Forest models featured in the report is found in "code/kNN_lda_final.R" and "code/random_forest_final.R", respectively. No data cleaning scripts need to be run prior to running these scripts, as the CSV files with cleaned and merged data have already been created. The scripts for data scraping, cleaning and merging can be found in "code/Data Scraping and Cleaning." The R Source Files in this folder are numbered based on the order they should be run to produce the same cleaned data used for this project. The code for exploratory data analysis (EDA) is distributed among a variety of R Source Files, R Markdown files, and Tableau files. These files can be found in "code/EDA" and do not need to be run in any particular order. Inital modeling prior to cross-validation and hyperparameter tuning can be found in "code/knn_kmeans_binary.Rmd" and "code/models_with_pca.R". Like the scripts for the final models, these can be run without any data cleaning scripts run prior.
+
 ### Custom Function
 
 ### Troubleshooting and Recommendations
@@ -58,18 +60,11 @@ It is recommended that the next steps for this project include the following act
 All group members were involved in writing code and writing the final report. Individuals wrote much of the code separately but came together to review the code weekly where constructive feedback was given and ensured the code was running properly after all commits on all group members computers. All files were tested by all group members and ran without issue. The group members initials are present next to each section of code to indicate who wrote each part. These initials indicate the delegated section assignments.
 
 ## References
-Ramy Elitzur,
-Data analytics effects in major league baseball,
-Omega,
-Volume 90,
-2020,
-102001,
-ISSN 0305-0483,
-https://doi.org/10.1016/j.omega.2018.11.010.
-(https://www.sciencedirect.com/science/article/pii/S0305048318300215)
+National Baseball Hall of Fame. (n.d.). Henry Chadwick. National Baseball Hall of Fame. Retrieved March 2025, 24, from https://baseballhall.org/hall-of-famers/chadwick-henry.
 
-Abstract: The use of data analytics has enjoyed resurgence over the last two decades in professional sports, businesses, and the government. This resurgence is attributable to Moneyball, which exposed readers to the use of advanced baseball analytics by the Oakland Athletics, and how it has resulted in improved player selection and game management. Moreover, it changed managerial vocabulary, as the term “Moneyballing” now commonly describes organizations that use data analytics. The first research question that this study examines is whether the organizational knowledge related to baseball data analytics has provided any advantage in the competitive Major League Baseball (MLB) marketplace. The second research question is whether this strategic advantage can be sustained once this proprietary organizational knowledge becomes public. First, I identify “Moneyball” teams and executives, i.e., those who rely on baseball data analytics, and track their pay/performance over time. Next, using econometric models, I analyze whether these “Moneyball” teams and GMs, have enjoyed a pay-performance advantage over the rest of MLB, and whether this advantage persists after the information becomes public.
-Keywords: Data analytics; Moneyball; OR in sports; Empirical analysis; Information; Major league baseball
+Statista Research Department. (2024, July 3). Sports betting worldwide - statistics & facts. Statista. Retrieved March 24, 2025, from 
+https://www.statista.com/topics/1740/sports-betting/#topicOverview
+https://onlinegrad.syracuse.edu/blog/sabermetrics-baseball-analytics-the-science-of-winning-accessible/#:~:text=Though%20the%20term%20%E2%80%9Csabermetrics%E2%80%9D%20has,dissect%20the%20science%20of%20winning.
 
 
 
