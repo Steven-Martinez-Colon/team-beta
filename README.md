@@ -27,7 +27,7 @@ Certain offensive and defensive statistics, like On-base percentage (OBP) and Wa
 ## Data and Methods
 
 ### Dataset:
-The data that was used was taken from a very accurate baseball statistics website called [Baseball Reference](https://www.baseball-reference.com). There were nine different datasets that were taken from this website, and these datasets were: standard batting data, standard pitching data, standard fielding data, player value data for batting and pitching, advanced batting and pitching statistics, sabermetrics data, and miscellaneous data. To extract this data from Baseball Reference, a custom function was created. The function can be found in the R `script scraping_baseball_data.R`.
+The data that was used was taken from a very accurate baseball statistics website called [Baseball Reference](https://www.baseball-reference.com). There were nine different datasets that were taken from this website, and these datasets were: standard batting data, standard pitching data, standard fielding data, player value data for batting and pitching, advanced batting and pitching statistics, sabermetrics data, and miscellaneous data. To extract this data from Baseball Reference, a custom function was created. The function can be found in the R script `scraping_baseball_data.R`.
 
 ### Data Dictionary:
 Click on the following link to access the [Data Dictionary](https://docs.google.com/spreadsheets/d/1CIF_PlHCG6iH3jl4aIAVXccJDVC2CTumdDulyaqLHo0/edit?usp=sharing) and learn about each variable.
