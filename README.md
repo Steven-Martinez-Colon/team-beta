@@ -2,6 +2,8 @@
 
 ### By: Joseph Annand, James Keegan, and Steven Martinez
 
+Full research paper can be found [here](https://docs.google.com/document/d/1KPKI_hL4eQsLtSYC39585JdPl7DB0yIPlYTsfp5u_3g/edit?tab=t.0).
+
 ## Project Details and Overview
 
 Each year millions of people participate in sports betting with the number of  users of popular sports betting websites, like FanDuel, growing each year (Statista Research Department, 2024). Bettors are able to put money on the line when predicting which teams will make the playoffs and win championships. Baseball is one of the oldest sports that has been consistently played at the professional level. The World Series, the championship series for Major League Baseball, has been played since 1903. Since before then, statistics for player and team performance have been recorded (National Baseball Hall of Fame). In recent years, advanced metrics for baseball have become popular and are readily available with MLB Statcast.  Bettors and analysts can use this available data to inform various predictions ranging from the achievements of specific players to teams’ regular season win-loss records. 
