@@ -27,7 +27,7 @@ library(pROC)
 
 
 ## Read data without changing special chars in column names
-mlb_data <- read.csv("final_data/final_data.csv", check.names = FALSE)
+mlb_data <- read.csv("final_data/final_dataset.csv", check.names = FALSE)
 
 ############################### Clean Data #####################################
 
