@@ -36,20 +36,40 @@ Click on the following link to access the [Data Dictionary](https://docs.google.
 A multi-class `team success` variable was created that represented how each team performed each year, and the different classes included missing the playoffs (1), making the playoffs and not going to the World Series (2), losing in the World Series (3), and winning the World Series (4).
 
 ### Predictor Variables:
+After joining all the datasets, there were 196 predictor variables. All of the variables were explored using PCA and LDA. The final random forest model consisted of 77 predictor variables after many of the variables were removed because of collinearity. The dataset for the random forest model can be found in the `final_data` folder, the dataset is called `rf_data.csv`. The final knn model with LDA used the dataset `final_dataset.csv`, which can also be found in the `final_data` folder.
 
 ## Analysis Plan
 
 ### Data Cleaning:
+The data cleaning process began by merging multiple datasets and renaming variables with identical names to avoid confusion. For instance, both batters and pitchers have a "batting average" (BA) statistic, but its meaning differs depending on context. To clearly distinguish between variables and their sources, we added standardized prefixes:
+
+* **sb.** = standard batting
+* **sp.** = standard pitching
+* **tf.** = team fielding
+* **ab.** = advanced batting
+* **ap.** = advanced pitching
+* **pvb.** = player value batting
+* **pvp.** = player value pitching
+* **sbm.** = sabermetrics
+* **md.** = miscellaneous
+
+These prefixes allowed us to easily identify each variable’s origin and purpose throughout the analysis.
+
+Next, we addressed a major class imbalance in the original `Team.Success` variable, which categorized teams into multiple outcomes (e.g., missed playoffs, playoff team, World Series loser, World Series winner). To mitigate this, we created a binary version of the variable: teams that missed the playoffs were labeled as 0, while all others (playoff teams and World Series participants) were labeled as 1. This resulted in the creation of a second, binary-labeled dataset. Both versions of the dataset—multi-class and binary—were used to compare model performance.
+
+Lastly, for the final Random Forest model, we further refined the binary dataset by reducing the number of predictor variables from 196 to 77 to improve model efficiency and interpretability.
 
 ### Predictive Modeling:
+To evaluate team success, we built and compared multiple classification models using both a **four-class** and **binary** version of the target variable (team success). Our modeling pipeline included extensive pre-processing steps: removing collinear and incomplete variables, applying transformations (e.g., Box-Cox), and using **Principal Component Analysis (PCA)** and **Linear Discriminant Analysis (LDA)** for dimensionality reduction.
 
-## What will indicate if the question is answered and the hypothesis supported?
+We trained four **k-Nearest Neighbor (kNN)** models using either PCA or LDA as input and tested them on both the multiclass and binary response variables. The **kNN model using LDA** performed best for the **multiclass** setting, achieving better balance in correctly predicting all four team success classes. As a result, this model was selected as our final model for multiclass classification.
+
+For the **binary classification task** (predicting whether a team made the playoffs), we trained a **Random Forest model**. It outperformed all other models, achieving **94.94% test accuracy**, an AUC of **0.957**, and a Kappa of **0.885**. The Random Forest model was particularly strong at distinguishing playoff vs. non-playoff teams, and its variable importance rankings provided valuable insights. However, in the multiclass setting, it struggled with underrepresented classes and heavily favored the first two categories due to class imbalance.
+
+In summary, the **kNN with LDA** model is our final choice for **multiclass team success prediction**, while the **Random Forest model** is our final model for the **binary playoff prediction task** due to its superior performance and interpretability.
 
 ## Instructions for running the code
-
 All essential scripts are written in R. Set the working directory for your session to the repository. The code for the final k-Nearest Neighbor and Random Forest models featured in the report is found in "code/kNN_lda_final.R" and "code/random_forest_final.R", respectively. No data cleaning scripts need to be run prior to running these scripts, as the CSV files with cleaned and merged data have already been created. The scripts for data scraping, cleaning and merging can be found in "code/Data Scraping and Cleaning." The R Source Files in this folder are numbered based on the order they should be run to produce the same cleaned data used for this project. The code for exploratory data analysis (EDA) is distributed among a variety of R Source Files, R Markdown files, and Tableau files. These files can be found in "code/EDA" and do not need to be run in any particular order. Inital modeling prior to cross-validation and hyperparameter tuning can be found in "code/knn_kmeans_binary.Rmd" and "code/models_with_pca.R". Like the scripts for the final models, these can be run without any data cleaning scripts run prior.
-
-### Custom Function
 
 ### Troubleshooting and Recommendations
 During the analysis, users may encounter missing package errors or file path issues. To resolve these, ensure all required R packages are installed and that dataset files are placed in the correct directories. For additional support, refer to the R manual for troubleshooting R-specific issues.
